@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <!-- html2canvas and jspdf CDNs (minificados para otimização) -->
+  <!-- html2canvas and jspdf CDNs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
@@ -25,10 +25,6 @@
     }
     input[type="number"] {
       -moz-appearance: textfield;
-    }
-    /* Inputs melhorados */
-    .input-style {
-      @apply bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300;
     }
 
     .modal {
@@ -66,7 +62,8 @@
         <div class="modal-content">
             <h3 class="text-xl font-semibold mb-4 text-white text-center">API Key Necessária</h3>
             <p class="text-gray-400 mb-4 text-center">Para usar a função de IA, por favor, insira sua chave da API do Google Gemini abaixo.</p>
-            <input type="text" id="modal-api-key-input" placeholder="Sua Chave de API" class="input-style w-full mb-4">
+            <input type="text" id="modal-api-key-input" placeholder="Sua Chave de API" 
+              class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-full mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
             <div class="flex justify-between space-x-4">
                 <button id="modal-continue-button" class="w-1/2 px-6 py-3 text-white font-semibold rounded-lg shadow-md bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
                     Continuar
@@ -128,7 +125,8 @@
         <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white">Gerar Lista com ✨Gemini</h2>
         <p class="text-gray-400 mb-4">Insira um tema e deixe a IA gerar a lista.</p>
         <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
-          <input type="text" id="gemini-prompt" placeholder="Ex: Ingredientes para uma feijoada" class="input-style flex-grow">
+          <input type="text" id="gemini-prompt" placeholder="Ex: Ingredientes para uma feijoada" 
+            class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
           <button id="generate-list-button" class="w-full sm:w-auto px-6 py-3 text-white font-semibold rounded-lg shadow-md bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 transition duration-300">
             Gerar Lista ✨
           </button>
@@ -139,8 +137,10 @@
       <div class="bg-gray-800 p-6 rounded-lg shadow-xl mb-6">
         <h2 class="text-xl sm:text-2xl font-semibold mb-4 text-white">Cadastrar Produto Manualmente</h2>
         <div class="flex flex-col sm:flex-row sm:space-x-4 space-y-4 sm:space-y-0">
-          <input type="text" id="new-product-name" placeholder="Nome do Produto" class="input-style flex-grow">
-          <input type="number" id="new-product-price" placeholder="Valor Unitário (R$)" class="input-style w-full sm:w-auto">
+          <input type="text" id="new-product-name" placeholder="Nome do Produto" 
+            class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+          <input type="number" id="new-product-price" placeholder="Valor Unitário (R$)" 
+            class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-full sm:w-auto focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
           <button id="add-product-list-button" class="w-full sm:w-auto px-6 py-3 text-white font-semibold rounded-lg shadow-md bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
             Cadastrar Produto
           </button>
