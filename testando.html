@@ -17,10 +17,41 @@
     /* Estilo de fonte global */
     body {
       font-family: 'Inter', sans-serif;
+      transition: background-color 0.3s, color 0.3s;
     }
     /* Classe para esconder elementos */
     .hidden {
       display: none !important;
+    }
+    /* Estilos para o modo claro */
+    body.light-mode {
+      background-color: #f3f4f6;
+      color: #1f2937;
+    }
+    .light-mode .bg-gray-900 {
+      background-color: #f3f4f6;
+    }
+    .light-mode .bg-gray-800 {
+      background-color: #e5e7eb;
+    }
+    .light-mode .bg-gray-700 {
+      background-color: #d1d5db;
+    }
+    .light-mode .border-gray-700 {
+      border-color: #9ca3af;
+    }
+    .light-mode .placeholder-gray-400 {
+      color: #4b5563;
+    }
+    .light-mode .text-gray-400 {
+      color: #4b5563;
+    }
+    .light-mode .text-gray-200 {
+      color: #374151;
+    }
+    .light-mode input, .light-mode select {
+      background-color: #d1d5db !important;
+      color: #1f2937 !important;
     }
     /* Estilo para a tabela em telas pequenas */
     .table-container {
@@ -36,7 +67,7 @@
     <div class="flex justify-center space-x-4">
       <button id="nav-calculator" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Calculadora</button>
       <button id="nav-shopping-list" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Lista de Compras</button>
-      <button id="nav-logs" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Logs</button>
+      <button id="nav-settings" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Configurações</button>
     </div>
   </nav>
 
@@ -119,31 +150,57 @@
       </div>
     </div>
 
-    <!-- Página de Logs -->
-    <div id="logs-page" class="page-content hidden flex flex-col gap-6">
-      <h1 class="text-2xl font-bold text-center sm:text-3xl">Logs do Sistema</h1>
-      <p class="text-center text-gray-400 max-w-2xl mx-auto">Aqui você pode visualizar as atividades e notificações do aplicativo.</p>
-      
-      <div class="flex flex-col sm:flex-row justify-end gap-4">
-        <button id="exportLogsBtn" class="py-3 px-6 rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Exportar Logs para PDF</button>
-      </div>
+    <!-- Página de Configurações (nova) -->
+    <div id="settings-page" class="page-content hidden flex flex-col gap-6">
+        <h1 class="text-2xl font-bold text-center sm:text-3xl">Configurações</h1>
+        <p class="text-center text-gray-400 max-w-2xl mx-auto">Gerencie as configurações do aplicativo e visualize os logs do sistema.</p>
 
-      <div class="table-container bg-gray-800 rounded-lg shadow-lg p-4 mt-4">
-        <table id="logs-table" class="w-full text-left table-auto">
-          <thead class="bg-gray-700 text-gray-200 uppercase text-xs sm:text-sm">
-            <tr>
-              <th class="p-2 sm:p-3 rounded-tl-lg">Data/Horário</th>
-              <th class="p-2 sm:p-3">Dispositivo</th>
-              <th class="p-2 sm:p-3 rounded-tr-lg">Mensagem</th>
-            </tr>
-          </thead>
-          <tbody id="logs-table-body">
-            <!-- Linhas da tabela de logs serão inseridas aqui via JavaScript -->
-          </tbody>
-        </table>
-      </div>
+        <!-- Seção de Tema -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-semibold mb-2">Tema da Interface</h2>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-400">Alterar para:</span>
+                <button id="theme-toggle-btn" class="py-2 px-4 rounded-full bg-gray-600 hover:bg-gray-700 transition-colors shadow-md font-semibold">Modo Claro</button>
+            </div>
+        </div>
+
+        <!-- Seção de Logs (movida para cá) -->
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-semibold mb-2">Logs do Sistema</h2>
+            <p class="text-gray-400 text-sm">Aqui você pode visualizar as atividades e notificações do aplicativo.</p>
+            
+            <div class="flex justify-end">
+                <button id="exportLogsBtn" class="py-2 px-4 rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-md text-sm font-semibold">Exportar Logs para PDF</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="logs-table" class="w-full text-left table-auto">
+                    <thead class="bg-gray-700 text-gray-200 uppercase text-xs sm:text-sm">
+                        <tr>
+                            <th class="p-2 sm:p-3 rounded-tl-lg">Data/Horário</th>
+                            <th class="p-2 sm:p-3">Dispositivo</th>
+                            <th class="p-2 sm:p-3 rounded-tr-lg">Mensagem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="logs-table-body">
+                        <!-- Linhas da tabela de logs serão inseridas aqui via JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
+    <!-- Modal de Confirmação de Exclusão (novo) -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
+        <h2 class="text-xl font-bold mb-4 text-center">Confirmação de Exclusão</h2>
+        <p id="confirm-message" class="text-center mb-6 text-gray-300">Tem certeza que deseja excluir este item?</p>
+        <div class="flex justify-end gap-4">
+          <button id="confirm-cancel-btn" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
+          <button id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded-lg transition-colors">Confirmar</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Modal para Identificação de Produto por Câmera -->
     <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
@@ -220,15 +277,9 @@
     // Variável global para informações do dispositivo
     let deviceAndIpInfo = "";
 
-    // Função para carregar dinamicamente o jsPDF
-    async function loadJsPDF() {
-      if (typeof window.jspdf === 'undefined') {
-        const { jsPDF: jsPDFModule } = await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-        jsPDF = jsPDFModule;
-      } else {
-        jsPDF = window.jspdf.jsPDF;
-      }
-    }
+    // Variável para armazenar o modo do tema ('dark' ou 'light')
+    let currentTheme = 'dark';
+    const themeStorageKey = 'appTheme';
 
     /**
      * Tenta buscar o endereço IP público e o agente do navegador.
@@ -248,6 +299,18 @@
             console.error("Erro ao obter o IP:", error);
         }
         return `Navegador: ${navigator.userAgent} | IP: ${ip}`;
+    }
+
+    /**
+     * Carrega dinamicamente o jsPDF.
+     */
+    async function loadJsPDF() {
+      if (typeof window.jspdf === 'undefined') {
+        const { jsPDF: jsPDFModule } = await import('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+        jsPDF = jsPDFModule;
+      } else {
+        jsPDF = window.jspdf.jsPDF;
+      }
     }
 
     // Espera o DOM carregar completamente
@@ -270,9 +333,10 @@
       const shoppingListTableBody = document.querySelector("#shopping-list-table tbody");
       const shoppingListLocalStorageKey = "shoppingListData";
       
-      const logsPage = document.getElementById("logs-page");
+      const settingsPage = document.getElementById("settings-page");
       const logsTableBody = document.getElementById("logs-table-body");
       const exportLogsBtn = document.getElementById("exportLogsBtn");
+      const themeToggleBtn = document.getElementById("theme-toggle-btn");
 
       const geminiPromptInput = document.getElementById("gemini-prompt");
       const generateListButton = document.getElementById("generate-list-button");
@@ -286,10 +350,17 @@
 
       const navCalculator = document.getElementById('nav-calculator');
       const navShoppingList = document.getElementById('nav-shopping-list');
-      const navLogs = document.getElementById('nav-logs');
+      const navSettings = document.getElementById('nav-settings');
       const messageBox = document.getElementById('message-box');
 
-      // Seletores do novo modal de câmera
+      // Seletores do novo modal de confirmação de exclusão
+      const confirmModal = document.getElementById("confirm-modal");
+      const confirmMessage = document.getElementById("confirm-message");
+      const confirmDeleteBtn = document.getElementById("confirm-delete-btn");
+      const confirmCancelBtn = document.getElementById("confirm-cancel-btn");
+      let deleteCallback = null;
+
+      // Seletores do modal de câmera
       const cameraModal = document.getElementById("camera-modal");
       const cameraVideo = document.getElementById("camera-video");
       const cameraCanvas = document.getElementById("camera-canvas");
@@ -305,6 +376,7 @@
       // Carrega bibliotecas e informações do dispositivo
       await loadJsPDF();
       deviceAndIpInfo = await fetchDeviceInfoAndIP();
+      loadThemePreference();
       addLogEntry("Aplicação iniciada.", "info");
 
       // ----------------------------------------------------------------------------------
@@ -387,6 +459,18 @@
         }
       }
 
+      /**
+       * Abre o modal de confirmação de exclusão.
+       * @param {string} itemName O nome do item a ser excluído.
+       * @param {Function} callback A função a ser executada se a exclusão for confirmada.
+       */
+      function showConfirmModal(itemName, callback) {
+        confirmMessage.textContent = `Tem certeza que deseja excluir o item "${itemName}"?`;
+        confirmModal.classList.remove('hidden');
+        deleteCallback = callback;
+        addLogEntry(`Tentativa de exclusão do item "${itemName}".`, 'info');
+      }
+
       // ----------------------------------------------------------------------------------
       // Lógica da Calculadora
       // ----------------------------------------------------------------------------------
@@ -426,8 +510,12 @@
         quantityInput.addEventListener("input", updateRowTotalAndSave);
         productInput.addEventListener("input", saveDataFromCalculator);
         removeButton.addEventListener("click", function() {
-          row.remove();
-          updateTotalAndSave();
+          const productValue = productInput.value || `Produto ${newId}`;
+          showConfirmModal(productValue, () => {
+            row.remove();
+            updateTotalAndSave();
+            showMessage(`O item "${productValue}" foi excluído.`, 'success');
+          });
         });
 
         // Atualiza o total se os valores forem preenchidos
@@ -543,10 +631,13 @@
         `;
 
         row.querySelector(".remove-list-item-btn").addEventListener("click", () => {
-          let data = loadDataFromLocalStorage(shoppingListLocalStorageKey);
-          data.splice(index, 1);
-          saveDataToLocalStorage(shoppingListLocalStorageKey, data);
-          loadDataFromShoppingListLocalStorage();
+          showConfirmModal(item.name, () => {
+            let data = loadDataFromLocalStorage(shoppingListLocalStorageKey);
+            data.splice(index, 1);
+            saveDataToLocalStorage(shoppingListLocalStorageKey, data);
+            loadDataFromShoppingListLocalStorage();
+            showMessage(`O item "${item.name}" foi excluído.`, 'success');
+          });
         });
       }
 
@@ -752,7 +843,7 @@
             contents: [{
               parts: [
                 // Prompt para a IA, instruindo-a a responder apenas com o nome do produto
-                { text: `Identifique o produto principal nesta imagem. Responda APENAS com o nome do produto. Se não puder identificar, responda com 'Produto não identificado'.` },
+                { text: `Identifique o produto principal nesta imagem. Responda APENHAS com o nome do produto. Se não puder identificar, responda com 'Produto não identificado'.` },
                 { inlineData: { mimeType: "image/png", data: base64Data } }
               ]
             }],
@@ -807,7 +898,7 @@
         // Adiciona as novas linhas, do mais recente para o mais antigo
         systemLogs.slice().reverse().forEach(log => {
           const row = logsTableBody.insertRow();
-          row.className = `border-b border-gray-700 text-sm sm:text-base ${log.type === 'error' ? 'bg-red-900 text-red-200' : 'bg-gray-800'}`;
+          row.className = `border-b border-gray-700 text-sm sm:text-base ${log.type === 'error' ? 'bg-red-900 text-red-200' : ''}`;
           
           const timestampCell = row.insertCell(0);
           timestampCell.textContent = log.timestamp;
@@ -837,6 +928,7 @@
         let y = 20;
         const margin = 10;
         const pageHeight = doc.internal.pageSize.getHeight();
+        const pageWidth = doc.internal.pageSize.getWidth();
         
         // Título e cabeçalho
         doc.setFontSize(16);
@@ -845,7 +937,7 @@
         doc.setFontSize(10);
         
         const headers = ["Data/Horário", "Dispositivo", "Mensagem"];
-        const columnWidths = [45, 80, 75]; // Larguras ajustadas para as colunas
+        const columnWidths = [45, 65, pageWidth - margin * 2 - 45 - 65]; // Larguras ajustadas para A4
 
         // Desenha a linha do cabeçalho
         doc.setFont("helvetica", "bold");
@@ -855,14 +947,22 @@
         doc.setFont("helvetica", "normal");
         y += 5;
         doc.setLineWidth(0.5);
-        doc.line(margin, y, doc.internal.pageSize.getWidth() - margin, y);
+        doc.line(margin, y, pageWidth - margin, y);
         y += 5;
 
         // Itera sobre os logs e adiciona ao PDF
         doc.setFontSize(8);
         systemLogs.forEach(log => {
+          const timestampLines = doc.splitTextToSize(log.timestamp, columnWidths[0] - 5);
+          const deviceLines = doc.splitTextToSize(log.device, columnWidths[1] - 5);
+          const messageLines = doc.splitTextToSize(log.message, columnWidths[2] - 5);
+
+          const totalLines = Math.max(timestampLines.length, deviceLines.length, messageLines.length);
+          const lineHeight = 4; // Espaçamento entre as linhas
+          const rowHeight = totalLines * lineHeight + 2;
+
           // Verifica se precisa de uma nova página
-          if (y + 10 > pageHeight - margin) {
+          if (y + rowHeight > pageHeight - margin) {
             doc.addPage();
             y = margin + 10;
             doc.setFontSize(10);
@@ -873,30 +973,70 @@
             doc.setFont("helvetica", "normal");
             y += 5;
             doc.setLineWidth(0.5);
-            doc.line(margin, y, doc.internal.pageSize.getWidth() - margin, y);
+            doc.line(margin, y, pageWidth - margin, y);
             y += 5;
             doc.setFontSize(8);
           }
-
-          // Adiciona a linha do log
-          const formattedText = [log.timestamp, log.device, log.message];
           
-          // Usa a função `splitTextToSize` para quebrar a mensagem se for muito longa
-          const messageLines = doc.splitTextToSize(formattedText[2], columnWidths[2] - 5);
-          
-          doc.text(formattedText[0], margin, y);
-          doc.text(formattedText[1], margin + columnWidths[0], y);
+          doc.text(timestampLines, margin, y);
+          doc.text(deviceLines, margin + columnWidths[0], y);
           doc.text(messageLines, margin + columnWidths[0] + columnWidths[1], y);
           
-          // Calcula a próxima posição Y com base no número de linhas da mensagem
-          y += (messageLines.length * 4) + 2; // Ajusta o espaçamento
+          y += rowHeight;
         });
 
         // Salva o documento
         doc.save("logs_do_sistema.pdf");
         showMessage("PDF dos logs salvo com sucesso!", "success");
       }
+      
+      // ----------------------------------------------------------------------------------
+      // Lógica de Tema (Modo Claro/Escuro)
+      // ----------------------------------------------------------------------------------
+      
+      /**
+       * Salva o tema selecionado no Local Storage.
+       */
+      function saveThemePreference() {
+        localStorage.setItem(themeStorageKey, currentTheme);
+      }
 
+      /**
+       * Carrega o tema do Local Storage e aplica-o.
+       */
+      function loadThemePreference() {
+        const savedTheme = localStorage.getItem(themeStorageKey);
+        if (savedTheme) {
+          currentTheme = savedTheme;
+        } else {
+          currentTheme = 'dark'; // Padrão
+        }
+        applyTheme();
+      }
+
+      /**
+       * Aplica o tema atual ao corpo do documento.
+       */
+      function applyTheme() {
+        if (currentTheme === 'light') {
+          document.body.classList.add('light-mode');
+          themeToggleBtn.textContent = 'Modo Escuro';
+          addLogEntry("Tema alterado para Modo Claro.", "info");
+        } else {
+          document.body.classList.remove('light-mode');
+          themeToggleBtn.textContent = 'Modo Claro';
+          addLogEntry("Tema alterado para Modo Escuro.", "info");
+        }
+      }
+
+      /**
+       * Alterna entre o modo claro e escuro.
+       */
+      function toggleTheme() {
+        currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme();
+        saveThemePreference();
+      }
 
       // ----------------------------------------------------------------------------------
       // Lógica dos Modais e Event Listeners
@@ -906,7 +1046,7 @@
       addButton.addEventListener("click", () => addNewRow());
       savePDFButton.addEventListener("click", saveTableAsPDF);
       
-      // Novo Event Listener para o botão de câmera
+      // Event Listener para o botão de câmera
       cameraScanBtn.addEventListener("click", () => {
         cameraModal.classList.remove('hidden');
         startCamera();
@@ -925,10 +1065,24 @@
       
       // Event Listener para exportar os logs
       exportLogsBtn.addEventListener("click", exportLogsToPDF);
+      
+      // Event Listener para o botão de alternar tema
+      themeToggleBtn.addEventListener("click", toggleTheme);
+
+      // Event Listeners do Modal de Confirmação
+      confirmDeleteBtn.addEventListener("click", () => {
+        if (deleteCallback) {
+          deleteCallback();
+          confirmModal.classList.add('hidden');
+        }
+      });
+      confirmCancelBtn.addEventListener("click", () => {
+        addLogEntry("Exclusão cancelada pelo usuário.", "info");
+        confirmModal.classList.add('hidden');
+      });
 
       // Event Listeners do Modal da Câmera
       captureImageBtn.addEventListener("click", captureAndIdentify);
-
       modalAddButton.addEventListener("click", () => {
         const product = identifiedProductNameInput.value.trim();
         const unitPrice = modalUnitPriceInput.value.trim();
@@ -943,7 +1097,6 @@
         cameraModal.classList.add('hidden');
         showMessage("Produto adicionado com sucesso!", "success");
       });
-
       modalCancelButton.addEventListener("click", () => {
         cameraModal.classList.add('hidden');
         stopCamera();
@@ -962,16 +1115,13 @@
           showMessage("API Key inválida.", 'error');
         }
       });
-
       modalCancelApiButton.addEventListener('click', () => {
         apiKeyModal.classList.add('hidden');
         showMessage("Funcionalidade de IA ignorada.", 'info');
       });
-
       instructionsButton.addEventListener("click", () => {
         instructionsModal.classList.remove("hidden");
       });
-
       closeInstructions.addEventListener("click", () => {
         instructionsModal.classList.add("hidden");
       });
@@ -989,8 +1139,8 @@
       // Event listeners para os botões de navegação
       navCalculator.addEventListener('click', () => showPage('calculator-page'));
       navShoppingList.addEventListener('click', () => showPage('shopping-list-page'));
-      navLogs.addEventListener('click', () => {
-        showPage('logs-page');
+      navSettings.addEventListener('click', () => {
+        showPage('settings-page');
       });
 
       // Lógica de segurança: para a câmera quando a página não está ativa
