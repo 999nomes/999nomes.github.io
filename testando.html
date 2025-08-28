@@ -7,118 +7,633 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    /* Estilo para a classe 'completed' que adiciona um efeito de risco na linha */
+    .completed-item {
+      text-decoration: line-through;
+      color: #9ca3af; /* cinza */
+    }
+  </style>
 </head>
-<body class="bg-gray-900 text-white min-h-screen">
+<body class="bg-gray-900 text-white min-h-screen font-sans">
   <!-- Navbar -->
-  <nav class="bg-gray-800 p-4 flex justify-between">
-    <span class="font-bold text-lg">App de Compras</span>
+  <nav class="bg-gray-800 p-4 flex flex-col sm:flex-row justify-between items-center fixed w-full top-0 z-10 shadow-lg">
+    <span class="font-bold text-lg mb-2 sm:mb-0">App de Compras</span>
     <div class="space-x-4">
-      <button id="nav-calculator" class="hover:underline">Calculadora</button>
-      <button id="nav-shopping-list" class="hover:underline">Lista de Compras</button>
+      <button id="nav-calculator" class="hover:text-blue-400 transition">Calculadora</button>
+      <button id="nav-shopping-list" class="hover:text-blue-400 transition">Lista de Compras</button>
     </div>
   </nav>
 
-  <!-- Mensagens -->
-  <div id="message-box" class="hidden"></div>
+  <!-- Container principal com margin-top para a navbar fixa -->
+  <div class="pt-20 pb-8 px-4 max-w-7xl mx-auto">
+    <!-- Mensagens -->
+    <div id="message-box" class="hidden"></div>
 
-  <!-- Página Calculadora -->
-  <div id="calculator-page" class="page-content p-6">
-    <h1 class="text-2xl font-bold mb-4">Calculadora</h1>
-    <table id="tabelaprod" class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-      <thead>
-        <tr class="bg-gray-700">
-          <th class="px-2 py-1">#</th>
-          <th class="px-2 py-1">Produto</th>
-          <th class="px-2 py-1">Tipo</th>
-          <th class="px-2 py-1">Preço Unitário</th>
-          <th class="px-2 py-1">Quantidade</th>
-          <th class="px-2 py-1">Total</th>
-          <th class="px-2 py-1">Ações</th>
-          <th class="px-2 py-1">✔</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="mt-4 flex gap-2">
-      <button id="addButton" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Adicionar Produto</button>
-      <button id="savePDFButton" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded">Salvar PDF</button>
+    <!-- Página Calculadora -->
+    <div id="calculator-page" class="page-content">
+      <h1 class="text-2xl font-bold mb-4 text-center sm:text-left">Calculadora</h1>
+      <table id="tabelaprod" class="min-w-full bg-gray-800 rounded-lg overflow-hidden shadow-xl mb-4">
+        <thead>
+          <tr class="bg-gray-700 text-sm sm:text-base">
+            <th class="px-2 py-1">#</th>
+            <th class="px-2 py-1">Produto</th>
+            <th class="px-2 py-1">Tipo</th>
+            <th class="px-2 py-1">Preço Unit.</th>
+            <th class="px-2 py-1">Qtd.</th>
+            <th class="px-2 py-1">Total</th>
+            <th class="px-2 py-1">Ações</th>
+            <th class="px-2 py-1">Adic.</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="mt-4 flex flex-col sm:flex-row gap-2 justify-center sm:justify-start">
+        <button id="addButton" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-bold transition transform hover:scale-105 shadow-lg">Adicionar Produto</button>
+        <button id="identifyButton" class="bg-purple-600 hover:bg-purple-700 px-6 py-2 rounded-lg font-bold transition transform hover:scale-105 shadow-lg">Identificar com Câmera ✨</button>
+        <button id="savePDFButton" class="bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg font-bold transition transform hover:scale-105 shadow-lg">Salvar PDF</button>
+      </div>
+      <div id="totalvalue" class="mt-6 text-2xl font-bold text-center sm:text-left">Total: R$ 0,00</div>
     </div>
-    <div id="totalvalue" class="mt-4 font-bold text-lg">Total: R$ 0,00</div>
-  </div>
 
-  <!-- Página Lista de Compras -->
-  <div id="shopping-list-page" class="page-content hidden p-6">
-    <h1 class="text-2xl font-bold mb-4">Lista de Compras</h1>
+    <!-- Página Lista de Compras -->
+    <div id="shopping-list-page" class="page-content hidden">
+      <h1 class="text-2xl font-bold mb-4 text-center sm:text-left">Lista de Compras</h1>
 
-    <!-- Gerar Lista com Gemini -->
-    <div class="bg-gray-800 p-4 rounded-lg mb-6">
-      <h2 class="text-lg font-semibold mb-2">Gerar Lista com ✨ Gemini</h2>
-      <p class="text-sm text-gray-400 mb-3">Insira um tema e deixe a IA gerar a lista.</p>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <input type="text" id="gemini-prompt" placeholder="Ex: Ingredientes para uma feijoada"
-          class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" />
-        <div class="flex gap-2">
-          <button id="generate-list-button"
-            class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg transition">Gerar Lista ✨</button>
-          <button id="instructions-button"
-            class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition">Instruções 📘</button>
+      <!-- Gerar Lista com Gemini -->
+      <div class="bg-gray-800 p-4 rounded-lg mb-6 shadow-xl">
+        <h2 class="text-lg font-semibold mb-2">Gerar Lista com ✨ Gemini</h2>
+        <p class="text-sm text-gray-400 mb-3">Insira um tema e deixe a IA gerar a lista para você.</p>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="text" id="gemini-prompt" placeholder="Ex: Ingredientes para uma feijoada"
+            class="bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" />
+          <div class="flex gap-2 w-full sm:w-auto">
+            <button id="generate-list-button"
+              class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg font-bold transition w-full sm:w-auto">Gerar Lista ✨</button>
+            <button id="instructions-button"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-bold transition w-full sm:w-auto">Instruções 📘</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cadastrar Produto Manualmente -->
+      <div class="bg-gray-800 p-4 rounded-lg mb-6 shadow-xl">
+        <h2 class="text-lg font-semibold mb-2">Cadastrar Produto Manualmente</h2>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input type="text" id="new-product-name" placeholder="Nome do Produto"
+            class="bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 flex-grow focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" />
+          <input type="number" id="new-product-price" placeholder="Valor Unitário (R$)"
+            class="bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-full sm:w-40 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" />
+          <button id="add-product-list-button"
+            class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-white font-bold transition w-full sm:w-auto">Cadastrar</button>
+        </div>
+      </div>
+
+      <table id="shopping-list-table" class="min-w-full bg-gray-800 rounded-lg overflow-hidden shadow-xl">
+        <thead class="bg-gray-700 text-sm sm:text-base">
+          <tr>
+            <th class="px-2 py-1 text-left">Nome do Produto</th>
+            <th class="px-2 py-1 text-left">Valor Unitário</th>
+            <th class="px-2 py-1 text-left">Ações</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <!-- Modal API Key -->
+    <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-900 text-white p-8 rounded-lg w-11/12 sm:w-96 shadow-2xl relative border border-gray-700">
+        <h2 class="text-2xl font-bold mb-4 text-center">Digite sua API Key do Gemini</h2>
+        <input type="text" id="modal-api-key-input" placeholder="Cole sua API Key aqui"
+          class="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-3 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <div class="flex justify-end gap-3">
+          <button id="modal-cancel-button" class="bg-gray-600 hover:bg-gray-700 px-5 py-2 rounded-lg font-bold transition">Cancelar</button>
+          <button id="modal-continue-button" class="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-bold transition">Continuar</button>
         </div>
       </div>
     </div>
 
-    <!-- Cadastrar Produto Manualmente -->
-    <div class="bg-gray-800 p-4 rounded-lg mb-6">
-      <h2 class="text-lg font-semibold mb-2">Cadastrar Produto Manualmente</h2>
-      <div class="flex flex-col sm:flex-row gap-2">
-        <input type="text" id="new-product-name" placeholder="Nome do Produto"
-          class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 flex-grow" />
-        <input type="number" id="new-product-price" placeholder="Valor Unitário (R$)"
-          class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-40" />
-        <button id="add-product-list-button"
-          class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded text-white">Cadastrar Produto</button>
+    <!-- Modal Instruções -->
+    <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-900 text-white p-8 rounded-lg w-11/12 sm:w-96 shadow-2xl relative border border-gray-700">
+        <h2 class="text-2xl font-bold mb-4 text-center">Como obter sua API Key do Gemini</h2>
+        <ol class="list-decimal ml-5 space-y-3 text-sm text-gray-300">
+          <li>Acesse <a href="https://aistudio.google.com" target="_blank" class="text-blue-400 underline hover:text-blue-300 transition">aistudio.google.com</a></li>
+          <li>Faça login com sua conta Google.</li>
+          <li>No menu lateral, clique em **Get API Key** ou **Chaves de API**.</li>
+          <li>Crie uma nova chave e copie o código gerado.</li>
+          <li>Cole a chave no campo de API quando solicitado neste app.</li>
+        </ol>
+        <button id="close-instructions" class="mt-6 bg-red-600 hover:bg-red-700 px-5 py-2 rounded-lg text-white font-bold transition w-full">Fechar</button>
       </div>
     </div>
 
-    <table id="shopping-list-table" class="min-w-full bg-gray-800 rounded-lg overflow-hidden">
-      <thead class="bg-gray-700">
-        <tr>
-          <th class="px-2 py-1">Nome do Produto</th>
-          <th class="px-2 py-1">Valor Unitário</th>
-          <th class="px-2 py-1">Ações</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </div>
-
-  <!-- Modal API Key -->
-  <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-gray-900 text-white p-6 rounded-lg w-96 shadow-lg relative">
-      <h2 class="text-xl font-bold mb-4">Digite sua API Key do Gemini</h2>
-      <input type="text" id="modal-api-key-input" placeholder="Cole sua API Key aqui"
-        class="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 mb-4" />
-      <div class="flex justify-end gap-2">
-        <button id="modal-cancel-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded">Cancelar</button>
-        <button id="modal-continue-button" class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded">Continuar</button>
+    <!-- Modal Câmera -->
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-900 text-white p-4 rounded-lg w-11/12 sm:w-4/5 lg:w-3/5 shadow-2xl relative border border-gray-700">
+        <h2 class="text-2xl font-bold mb-4 text-center">Identificar Produto</h2>
+        <video id="camera-feed" class="w-full h-auto rounded-lg mb-4"></video>
+        <canvas id="camera-canvas" class="hidden"></canvas>
+        <div class="flex flex-col sm:flex-row gap-2 justify-center">
+          <button id="capture-button" class="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg font-bold transition transform hover:scale-105 shadow-lg">Tirar Foto</button>
+          <button id="close-camera-button" class="bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg font-bold transition transform hover:scale-105 shadow-lg">Fechar</button>
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Modal Instruções -->
-  <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-    <div class="bg-gray-900 text-white p-6 rounded-lg w-96 shadow-lg relative">
-      <h2 class="text-xl font-bold mb-4">Como obter sua API Key do Gemini</h2>
-      <ol class="list-decimal ml-5 space-y-2 text-sm">
-        <li>Acesse <a href="https://aistudio.google.com" target="_blank" class="text-blue-400 underline">aistudio.google.com</a></li>
-        <li>Faça login com sua conta Google.</li>
-        <li>No menu lateral, clique em <b>Get API Key</b> ou <b>Chaves de API</b>.</li>
-        <li>Crie uma nova chave e copie o código gerado.</li>
-        <li>Cole a chave no campo de API quando solicitado neste app.</li>
-      </ol>
-      <button id="close-instructions" class="mt-4 bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-white">Fechar</button>
+    <!-- Modal Detalhes do Produto -->
+    <div id="product-details-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-900 text-white p-8 rounded-lg w-11/12 sm:w-96 shadow-2xl relative border border-gray-700">
+        <h2 class="text-2xl font-bold mb-4 text-center">Detalhes do Produto</h2>
+        <div class="space-y-4">
+          <div>
+            <label class="block mb-1 text-sm text-gray-400">Produto Identificado:</label>
+            <input type="text" id="identified-product-name" disabled
+              class="w-full bg-gray-800 text-white border border-gray-600 rounded-md p-3" />
+          </div>
+          <div>
+            <label class="block mb-1 text-sm text-gray-400">Preço Unitário (R$):</label>
+            <input type="number" id="input-unit-price" placeholder="R$ 0.00"
+              class="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" />
+          </div>
+          <div>
+            <label class="block mb-1 text-sm text-gray-400">Quantidade:</label>
+            <input type="number" id="input-quantity" placeholder="Qtd."
+              class="w-full bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-3 mt-6">
+          <button id="add-to-list-button" class="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-lg font-bold transition">Adicionar à Lista</button>
+          <button id="cancel-details-button" class="bg-gray-600 hover:bg-gray-700 px-5 py-2 rounded-lg font-bold transition">Cancelar</button>
+        </div>
+      </div>
     </div>
+
   </div>
 
-  <script src="app_testedeaplicacao.js"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function() {
+      // ----------------------------------------------------------------------------------
+      // Common Selectors
+      // ----------------------------------------------------------------------------------
+      const calculatorPage = document.getElementById("calculator-page");
+      const tableBody = document.querySelector("#tabelaprod tbody");
+      const addButton = document.getElementById("addButton");
+      const identifyButton = document.getElementById("identifyButton");
+      const savePDFButton = document.getElementById("savePDFButton");
+      const totalValueSpan = document.getElementById("totalvalue");
+      const calculatorLocalStorageKey = "productCalculatorData";
+
+      const shoppingListPage = document.getElementById("shopping-list-page");
+      const newProductNameInput = document.getElementById("new-product-name");
+      const newProductPriceInput = document.getElementById("new-product-price");
+      const addProductListButton = document.getElementById("add-product-list-button");
+      const shoppingListTableBody = document.querySelector("#shopping-list-table tbody");
+      const shoppingListLocalStorageKey = "shoppingListData";
+
+      const geminiPromptInput = document.getElementById("gemini-prompt");
+      const generateListButton = document.getElementById("generate-list-button");
+      const apiKeyModal = document.getElementById("api-key-modal");
+      const modalApiKeyInput = document.getElementById("modal-api-key-input");
+      const modalContinueButton = document.getElementById("modal-continue-button");
+      const modalCancelButton = document.getElementById("modal-cancel-button");
+      const apiKeyLocalStorageKey = "geminiApiKey";
+      let apiKey = "";
+
+      const instructionsButton = document.getElementById("instructions-button");
+      const instructionsModal = document.getElementById("instructions-modal");
+      const closeInstructions = document.getElementById("close-instructions");
+
+      const navCalculator = document.getElementById("nav-calculator");
+      const navShoppingList = document.getElementById("nav-shopping-list");
+
+      const messageBox = document.getElementById("message-box");
+      
+      const cameraModal = document.getElementById("camera-modal");
+      const cameraFeed = document.getElementById("camera-feed");
+      const cameraCanvas = document.getElementById("camera-canvas");
+      const captureButton = document.getElementById("capture-button");
+      const closeCameraButton = document.getElementById("close-camera-button");
+      let cameraStream = null;
+
+      const productDetailsModal = document.getElementById("product-details-modal");
+      const identifiedProductNameInput = document.getElementById("identified-product-name");
+      const inputUnitPrice = document.getElementById("input-unit-price");
+      const inputQuantity = document.getElementById("input-quantity");
+      const addToListButton = document.getElementById("add-to-list-button");
+      const cancelDetailsButton = document.getElementById("cancel-details-button");
+
+      // ----------------------------------------------------------------------------------
+      // Helper Functions
+      // ----------------------------------------------------------------------------------
+      function showMessage(message, type = 'success') {
+        messageBox.textContent = message;
+        messageBox.className = 'bg-green-500 text-white p-3 rounded-lg mb-4 text-center max-w-4xl mx-auto shadow-md transition-opacity duration-300';
+        if (type === 'error') {
+          messageBox.className = 'bg-red-500 text-white p-3 rounded-lg mb-4 text-center max-w-4xl mx-auto shadow-md transition-opacity duration-300';
+        } else if (type === 'info') {
+          messageBox.className = 'bg-blue-500 text-white p-3 rounded-lg mb-4 text-center max-w-4xl mx-auto shadow-md transition-opacity duration-300';
+        }
+        messageBox.classList.remove('hidden');
+        setTimeout(() => messageBox.classList.add('hidden'), 3000);
+      }
+
+      // ----------------------------------------------------------------------------------
+      // Calculator Functions
+      // ----------------------------------------------------------------------------------
+      function saveDataToCalculatorLocalStorage() {
+        const rows = Array.from(tableBody.rows).map(row => {
+          return {
+            product: row.querySelector('input[name="product"]').value,
+            type: row.querySelector('select[name="type"]').value,
+            unitprice: row.querySelector('input[name="unitprice"]').value,
+            quantity: row.querySelector('input[name="quantity"]').value,
+            completed: row.querySelector('input[name="completed"]').checked
+          };
+        });
+        localStorage.setItem(calculatorLocalStorageKey, JSON.stringify(rows));
+      }
+
+      function loadDataFromCalculatorLocalStorage() {
+        const storedData = localStorage.getItem(calculatorLocalStorageKey);
+        if (storedData) {
+          JSON.parse(storedData).forEach(data => addCalculatorRow(data));
+        } else {
+          addCalculatorRow();
+        }
+        calculateTotalValue();
+      }
+
+      function clearCalculatorData() {
+        localStorage.removeItem(calculatorLocalStorageKey);
+        tableBody.innerHTML = '';
+        addCalculatorRow();
+        calculateTotalValue();
+      }
+
+      function updateTotal(event) {
+        const row = event.target.closest('tr');
+        const quantityInput = row.querySelector("input[name='quantity']");
+        const unitPriceInput = row.querySelector("input[name='unitprice']");
+        const totalCell = row.querySelector("td[name='total']");
+
+        const quantity = parseFloat(quantityInput.value);
+        const unitPrice = parseFloat(unitPriceInput.value);
+        let total = 0;
+        if (!isNaN(quantity) && !isNaN(unitPrice)) {
+          total = (quantity * unitPrice).toFixed(2);
+        }
+        totalCell.textContent = total;
+        calculateTotalValue();
+        saveDataToCalculatorLocalStorage();
+      }
+
+      function calculateTotalValue() {
+        const totalCells = document.querySelectorAll("td[name='total']");
+        let totalValue = 0;
+        totalCells.forEach(cell => {
+          const total = parseFloat(cell.textContent);
+          if (!isNaN(total)) totalValue += total;
+        });
+        totalValueSpan.textContent = `Total: R$ ${totalValue.toFixed(2)}`;
+      }
+
+      function addCalculatorRow(data = {}) {
+        const row = tableBody.insertRow();
+        const rowCount = tableBody.rows.length;
+        const formattedId = rowCount < 10 ? `0${rowCount}` : rowCount;
+
+        // Apply completed class to the row if the data indicates it's completed
+        if (data.completed) {
+          row.classList.add('completed-item');
+        }
+
+        row.innerHTML = `
+          <td class="px-2 py-2 text-center text-sm">${formattedId}</td>
+          <td class="px-2 py-2"><input type="text" name="product" value="${data.product || ''}" placeholder="Nome do produto" class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-32 sm:w-48 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"></td>
+          <td class="px-2 py-2">
+            <select name="type" class="bg-gray-800 text-white border border-gray-600 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300">
+              <option value="unitario" ${data.type === 'unitario' ? 'selected' : ''}>Unitário</option>
+              <option value="peso" ${data.type === 'peso' ? 'selected' : ''}>Peso</option>
+            </select>
+          </td>
+          <td class="px-2 py-2"><input type="number" name="unitprice" value="${data.unitprice || ''}" placeholder="R$ 0.00" class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-24 sm:w-28 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"></td>
+          <td class="px-2 py-2"><input type="number" name="quantity" value="${data.quantity || ''}" placeholder="Qtd." class="bg-gray-800 text-white placeholder-gray-400 border border-gray-600 rounded-md p-2 w-16 sm:w-20 focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-300"></td>
+          <td name="total" class="px-2 py-2 font-medium text-gray-200"></td>
+          <td class="px-2 py-2"><button class="delete-button text-red-500 hover:text-red-700 transition">Excluir</button></td>
+          <td class="px-2 py-2 text-center"><input type="checkbox" name="completed" class="form-checkbox h-5 w-5 text-blue-600 bg-gray-800 border-gray-600 rounded focus:ring-blue-500 cursor-pointer" ${data.completed ? 'checked' : ''}></td>
+        `;
+
+        const productInput = row.querySelector('input[name="product"]');
+        const quantityInput = row.querySelector('input[name="quantity"]');
+        const unitPriceInput = row.querySelector('input[name="unitprice"]');
+        const typeSelect = row.querySelector('select[name="type"]');
+        const deleteButton = row.querySelector('.delete-button');
+        const completedCheckbox = row.querySelector('input[name="completed"]');
+
+        productInput.addEventListener('input', saveDataToCalculatorLocalStorage);
+        quantityInput.addEventListener('input', updateTotal);
+        unitPriceInput.addEventListener('input', updateTotal);
+        typeSelect.addEventListener('change', updateTotal);
+
+        completedCheckbox.addEventListener('change', (event) => {
+          row.classList.toggle('completed-item', event.target.checked);
+          saveDataToCalculatorLocalStorage();
+          if (event.target.checked) {
+            if (productInput.value.trim() && unitPriceInput.value.trim()) {
+              addProductToShoppingListFromCalculator(productInput.value.trim(), unitPriceInput.value.trim());
+            } else {
+              showMessage("Preencha o nome e o valor antes de adicionar à lista.", 'error');
+              event.target.checked = false;
+              row.classList.remove('completed-item');
+            }
+          }
+        });
+
+        deleteButton.addEventListener('click', () => {
+          row.remove();
+          calculateTotalValue();
+          saveDataToCalculatorLocalStorage();
+        });
+
+        if (Object.keys(data).length > 0) updateTotal({ target: quantityInput });
+      }
+
+      addButton.addEventListener("click", () => { addCalculatorRow(); saveDataToCalculatorLocalStorage(); });
+
+      savePDFButton.addEventListener("click", async () => {
+        showMessage("Gerando PDF...", 'info');
+        const table = document.getElementById("tabelaprod");
+        const canvas = await html2canvas(table, { backgroundColor: '#111827', scale: 2 });
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF('p', 'mm', 'a4');
+        const imgData = canvas.toDataURL("image/jpeg", 1.0);
+        const imgProps = doc.getImageProperties(imgData);
+        const pdfWidth = doc.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        doc.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight);
+        doc.save("lista_produtos.pdf");
+        clearCalculatorData();
+      });
+
+      // ----------------------------------------------------------------------------------
+      // Shopping List Functions
+      // ----------------------------------------------------------------------------------
+      function saveDataToShoppingListLocalStorage() {
+        const rows = Array.from(shoppingListTableBody.rows).map(row => {
+          const nameElement = row.querySelector('.product-name-display');
+          const priceElement = row.querySelector('.product-price-display');
+          return { name: nameElement ? nameElement.textContent : '', price: priceElement ? priceElement.textContent.replace('R$ ', '') : '' };
+        });
+        localStorage.setItem(shoppingListLocalStorageKey, JSON.stringify(rows));
+      }
+
+      function loadDataFromShoppingListLocalStorage() {
+        shoppingListTableBody.innerHTML = '';
+        const storedData = localStorage.getItem(shoppingListLocalStorageKey);
+        if (storedData) JSON.parse(storedData).forEach(data => addProductToList(data.name, data.price));
+      }
+
+      function addProductToShoppingListFromCalculator(productName, productPrice) {
+        const storedData = JSON.parse(localStorage.getItem(shoppingListLocalStorageKey)) || [];
+        const exists = storedData.some(item => item.name.toLowerCase() === productName.toLowerCase());
+        if (exists) {
+          showMessage("Produto já adicionado à lista de compras.", 'info');
+          return;
+        }
+        storedData.push({ name: productName, price: productPrice });
+        localStorage.setItem(shoppingListLocalStorageKey, JSON.stringify(storedData));
+        loadDataFromShoppingListLocalStorage();
+        showMessage("Produto adicionado à lista de compras!");
+      }
+
+      function addProductToList(productName, productPrice) {
+        if (!productName || !productPrice) {
+          showMessage("Por favor, insira o nome e o valor do produto.", 'error');
+          return;
+        }
+        const newRow = shoppingListTableBody.insertRow();
+        newRow.innerHTML = `
+          <td class="px-2 py-2"><span class="product-name-display">${productName}</span></td>
+          <td class="px-2 py-2"><span class="product-price-display">R$ ${parseFloat(productPrice).toFixed(2)}</span></td>
+          <td class="px-2 py-2"><button class="delete-product-button text-red-500 hover:text-red-700 transition">Excluir</button></td>
+        `;
+        newRow.querySelector('.delete-product-button').addEventListener('click', () => {
+          newRow.remove();
+          saveDataToShoppingListLocalStorage();
+        });
+        saveDataToShoppingListLocalStorage();
+      }
+
+      addProductListButton.addEventListener("click", () => {
+        addProductToList(newProductNameInput.value.trim(), parseFloat(newProductPriceInput.value));
+        newProductNameInput.value = '';
+        newProductPriceInput.value = '';
+      });
+
+      // ----------------------------------------------------------------------------------
+      // Gemini Integration
+      // ----------------------------------------------------------------------------------
+      async function generateListWithGemini() {
+        const userPrompt = geminiPromptInput.value.trim();
+        if (!userPrompt) { showMessage("Digite um tema para gerar a lista.", 'error'); return; }
+        showMessage("Gerando lista com IA...", 'info');
+        generateListButton.disabled = true;
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+        const payload = {
+          contents: [{ parts: [{ text: `Gere uma lista de compras para: ${userPrompt}. Responda em JSON com [{\"product\":\"...\",\"price\":valor, \"description\": \"...\"}] para cada item.` }] }],
+          generationConfig: {
+              responseMimeType: "application/json",
+              responseSchema: {
+                  type: "ARRAY",
+                  items: {
+                      type: "OBJECT",
+                      properties: {
+                          "product": { "type": "STRING" },
+                          "price": { "type": "NUMBER" },
+                          "description": { "type": "STRING" }
+                      },
+                      "propertyOrdering": ["product", "price", "description"]
+                  }
+              }
+          }
+        };
+
+        try {
+          const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const result = await response.json();
+          const jsonContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (!jsonContent) throw new Error("Nenhum conteúdo retornado");
+          const parsed = JSON.parse(jsonContent);
+          parsed.forEach(item => addProductToList(item.product, item.price));
+          saveDataToShoppingListLocalStorage();
+          showMessage("Lista gerada com sucesso!");
+        } catch (e) {
+          console.error(e);
+          showMessage("Erro ao gerar lista. Verifique a chave da API e tente novamente.", 'error');
+        } finally {
+          generateListButton.disabled = false;
+        }
+      }
+
+      async function identifyProductWithGemini(base64Data) {
+        showMessage("Identificando produto com IA...", 'info');
+
+        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+        const payload = {
+            contents: [{
+                parts: [
+                    { text: "Identifique o nome do produto e a marca na imagem. Responda em JSON com o formato: {\"product\":\"Nome do Produto\", \"brand\":\"Marca\"}. Se não conseguir identificar, use o nome \"Produto Desconhecido\" e a marca \"Marca Desconhecida\"." },
+                    { inlineData: { mimeType: "image/jpeg", data: base64Data } }
+                ]
+            }]
+        };
+
+        try {
+            const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            const result = await response.json();
+            const jsonContent = result.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!jsonContent) throw new Error("Nenhum conteúdo de imagem retornado");
+            
+            // Clean up any potential markdown formatting from the JSON string
+            const cleanedJsonContent = jsonContent.replace(/```json|```/g, '').trim();
+            const parsed = JSON.parse(cleanedJsonContent);
+            return parsed;
+        } catch (e) {
+            console.error("Erro na identificação da imagem:", e);
+            showMessage("Erro ao identificar o produto. Tente novamente.", 'error');
+            return null;
+        }
+      }
+      
+      identifyButton.addEventListener("click", () => {
+          apiKey = localStorage.getItem(apiKeyLocalStorageKey) || "";
+          if (!apiKey) {
+              apiKeyModal.classList.remove('hidden');
+          } else {
+              openCameraModal();
+          }
+      });
+      
+      modalContinueButton.addEventListener('click', () => {
+          const inputKey = modalApiKeyInput.value.trim();
+          if (inputKey) {
+              apiKey = inputKey;
+              localStorage.setItem(apiKeyLocalStorageKey, apiKey);
+              apiKeyModal.classList.add('hidden');
+              generateListWithGemini();
+          } else {
+              showMessage("Insira uma chave válida.", 'error');
+          }
+      });
+
+      modalCancelButton.addEventListener('click', () => {
+          apiKeyModal.classList.add('hidden');
+          showMessage("Funcionalidade de IA ignorada.", 'info');
+      });
+
+      // ----------------------------------------------------------------------------------
+      // Camera Functions
+      // ----------------------------------------------------------------------------------
+      async function openCameraModal() {
+          cameraModal.classList.remove('hidden');
+          try {
+              cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+              cameraFeed.srcObject = cameraStream;
+              cameraFeed.play();
+          } catch (err) {
+              console.error("Erro ao acessar a câmera:", err);
+              showMessage("Não foi possível acessar a câmera. Verifique as permissões.", 'error');
+              cameraModal.classList.add('hidden');
+          }
+      }
+
+      closeCameraButton.addEventListener('click', () => {
+          if (cameraStream) {
+              cameraStream.getTracks().forEach(track => track.stop());
+              cameraFeed.srcObject = null;
+          }
+          cameraModal.classList.add('hidden');
+      });
+
+      captureButton.addEventListener('click', async () => {
+          const context = cameraCanvas.getContext('2d');
+          cameraCanvas.width = cameraFeed.videoWidth;
+          cameraCanvas.height = cameraFeed.videoHeight;
+          context.drawImage(cameraFeed, 0, 0, cameraCanvas.width, cameraCanvas.height);
+          const imageData = cameraCanvas.toDataURL('image/jpeg').split(',')[1];
+          closeCameraButton.click(); // Close the camera modal
+          
+          const identifiedProduct = await identifyProductWithGemini(imageData);
+          if (identifiedProduct) {
+              identifiedProductNameInput.value = `${identifiedProduct.product} - ${identifiedProduct.brand}`;
+              inputUnitPrice.value = '';
+              inputQuantity.value = '';
+              productDetailsModal.classList.remove('hidden');
+          } else {
+              showMessage("Não foi possível identificar o produto. Tente novamente.", 'error');
+          }
+      });
+      
+      addToListButton.addEventListener('click', () => {
+          const productName = identifiedProductNameInput.value.trim();
+          const unitPrice = parseFloat(inputUnitPrice.value);
+          const quantity = parseInt(inputQuantity.value);
+
+          if (!productName || isNaN(unitPrice) || isNaN(quantity)) {
+              showMessage("Preencha todos os campos corretamente.", 'error');
+              return;
+          }
+
+          addCalculatorRow({
+              product: productName,
+              type: 'unitario', // Default to 'unitario' for identified products
+              unitprice: unitPrice,
+              quantity: quantity,
+              completed: false
+          });
+          productDetailsModal.classList.add('hidden');
+          saveDataToCalculatorLocalStorage();
+          showMessage("Produto adicionado com sucesso!");
+      });
+
+      cancelDetailsButton.addEventListener('click', () => {
+          productDetailsModal.classList.add('hidden');
+          showMessage("Adição de produto cancelada.", 'info');
+      });
+
+      // ----------------------------------------------------------------------------------
+      // Instructions Modal
+      // ----------------------------------------------------------------------------------
+      instructionsButton.addEventListener("click", () => {
+        instructionsModal.classList.remove("hidden");
+      });
+
+      closeInstructions.addEventListener("click", () => {
+        instructionsModal.classList.add("hidden");
+      });
+
+      // ----------------------------------------------------------------------------------
+      // Navigation
+      // ----------------------------------------------------------------------------------
+      function showPage(pageId) {
+        document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
+        document.getElementById(pageId).classList.remove('hidden');
+      }
+
+      navCalculator.addEventListener('click', () => showPage('calculator-page'));
+      navShoppingList.addEventListener('click', () => showPage('shopping-list-page'));
+
+      // ----------------------------------------------------------------------------------
+      // Initialization
+      // ----------------------------------------------------------------------------------
+      showPage('calculator-page');
+      loadDataFromCalculatorLocalStorage();
+      loadDataFromShoppingListLocalStorage();
+    });
+  </script>
 </body>
 </html>
