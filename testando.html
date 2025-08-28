@@ -630,14 +630,16 @@
        * Captura uma imagem do stream de vídeo, chama a IA para identificar o produto e preenche o modal.
        */
       async function captureAndIdentify() {
+        // Verifica se a câmera está ativa antes de capturar
         if (!isCameraActive) {
-          showMessage("A câmera não está ativa.", "error");
+          showMessage("A câmera não está ativa. Por favor, reinicie a identificação.", "error");
           return;
         }
         
+        // Verifica se a API Key foi fornecida antes de chamar a IA
         if (!geminiApiKey) {
           apiKeyModal.classList.remove('hidden');
-          showMessage("Por favor, insira sua API Key.", "info");
+          showMessage("Por favor, insira sua API Key para usar a identificação por IA.", "info");
           return;
         }
 
@@ -664,6 +666,7 @@
           const payload = {
             contents: [{
               parts: [
+                // Prompt para a IA, instruindo-a a responder apenas com o nome do produto
                 { text: `Identifique o produto principal nesta imagem. Responda APENAS com o nome do produto. Se não puder identificar, responda com 'Produto não identificado'.` },
                 { inlineData: { mimeType: "image/png", data: base64Data } }
               ]
@@ -676,11 +679,19 @@
             body: JSON.stringify(payload)
           });
 
+          // Trata erros da resposta da API, como status 400, 403, etc.
           if (!response.ok) {
-            throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+            const errorData = await response.json();
+            console.error('Erro na resposta da API:', errorData);
+            let errorMessage = "Erro na API. Verifique sua chave e tente novamente.";
+            if (response.status === 400 && errorData.error && errorData.error.message.includes("API key not valid")) {
+                errorMessage = "API Key inválida. Por favor, verifique a chave no modal de instruções.";
+            }
+            throw new Error(errorMessage);
           }
           
           const result = await response.json();
+          // Extrai o nome do produto da resposta da IA
           const identifiedText = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'Produto não identificado';
           
           identifiedProductNameInput.value = identifiedText.trim();
@@ -691,7 +702,7 @@
         } catch (error) {
           console.error("Erro na identificação com IA:", error);
           identifiedProductNameInput.value = "Erro na identificação";
-          showMessage("Falha na identificação do produto. Tente novamente.", "error");
+          showMessage(`Falha na identificação do produto: ${error.message}`, "error");
           productForm.classList.remove('hidden');
           modalAddButton.classList.remove('hidden');
         }
