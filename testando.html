@@ -36,6 +36,7 @@
     <div class="flex justify-center space-x-4">
       <button id="nav-calculator" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Calculadora</button>
       <button id="nav-shopping-list" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Lista de Compras</button>
+      <button id="nav-logs" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Logs</button>
     </div>
   </nav>
 
@@ -118,6 +119,28 @@
       </div>
     </div>
 
+    <!-- Página de Logs -->
+    <div id="logs-page" class="page-content hidden flex flex-col gap-6">
+      <h1 class="text-2xl font-bold text-center sm:text-3xl">Logs do Sistema</h1>
+      <p class="text-center text-gray-400 max-w-2xl mx-auto">Aqui você pode visualizar as atividades e notificações do aplicativo em tempo real.</p>
+      
+      <div class="table-container bg-gray-800 rounded-lg shadow-lg p-4">
+        <table id="logs-table" class="w-full text-left table-auto">
+          <thead class="bg-gray-700 text-gray-200 uppercase text-xs sm:text-sm">
+            <tr>
+              <th class="p-2 sm:p-3 rounded-tl-lg">Data/Horário</th>
+              <th class="p-2 sm:p-3">IP/Dispositivo</th>
+              <th class="p-2 sm:p-3 rounded-tr-lg">Mensagem</th>
+            </tr>
+          </thead>
+          <tbody id="logs-table-body">
+            <!-- Linhas da tabela de logs serão inseridas aqui via JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+
     <!-- Modal para Identificação de Produto por Câmera -->
     <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
       <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/3 shadow-2xl relative">
@@ -189,6 +212,8 @@
     // Variável global para armazenar o stream da câmera
     let cameraStream = null;
     let geminiApiKey = "";
+    let systemLogs = []; // Array para armazenar os logs
+    let deviceAndIpInfo = "Carregando..."; // Variável global para o IP e info do dispositivo
 
     // Função para carregar dinamicamente o jsPDF
     async function loadJsPDF() {
@@ -202,8 +227,6 @@
 
     // Espera o DOM carregar completamente
     document.addEventListener("DOMContentLoaded", async function() {
-      await loadJsPDF();
-
       // ----------------------------------------------------------------------------------
       // Seletores comuns
       // ----------------------------------------------------------------------------------
@@ -221,6 +244,9 @@
       const addProductListButton = document.getElementById("add-product-list-button");
       const shoppingListTableBody = document.querySelector("#shopping-list-table tbody");
       const shoppingListLocalStorageKey = "shoppingListData";
+      
+      const logsPage = document.getElementById("logs-page");
+      const logsTableBody = document.getElementById("logs-table-body");
 
       const geminiPromptInput = document.getElementById("gemini-prompt");
       const generateListButton = document.getElementById("generate-list-button");
@@ -234,6 +260,7 @@
 
       const navCalculator = document.getElementById('nav-calculator');
       const navShoppingList = document.getElementById('nav-shopping-list');
+      const navLogs = document.getElementById('nav-logs');
       const messageBox = document.getElementById('message-box');
 
       // Seletores do novo modal de câmera
@@ -248,17 +275,48 @@
       const modalCancelButton = document.getElementById("modal-cancel-button");
       const productForm = document.getElementById("product-form");
       let isCameraActive = false;
+      
+      // Carrega bibliotecas e informações do dispositivo
+      await loadJsPDF();
+      await fetchDeviceInfoAndIP();
 
       // ----------------------------------------------------------------------------------
       // Funções de Utilidade
       // ----------------------------------------------------------------------------------
+
+      /**
+       * Adiciona uma entrada de log ao array e renderiza a tabela.
+       * @param {string} message A mensagem do log.
+       * @param {string} type O tipo de mensagem ('success', 'error', 'info').
+       */
+      function addLogEntry(message, type) {
+        const now = new Date();
+        const timestamp = now.toLocaleString('pt-BR');
+        
+        const logEntry = {
+          timestamp,
+          device: deviceAndIpInfo,
+          message,
+          type
+        };
+
+        systemLogs.push(logEntry);
+        // Limita o número de logs para evitar sobrecarregar a memória
+        if (systemLogs.length > 50) {
+          systemLogs.shift();
+        }
+        renderLogTable();
+      }
       
       /**
-       * Exibe uma mensagem na tela com um estilo específico.
+       * Exibe uma mensagem na tela e adiciona ao log.
        * @param {string} message A mensagem a ser exibida.
        * @param {string} type O tipo da mensagem ('success', 'error', 'info').
        */
       function showMessage(message, type) {
+        // Adiciona a mensagem ao log antes de exibi-la
+        addLogEntry(message, type);
+
         messageBox.textContent = message;
         messageBox.className = "fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-xl z-50 transform scale-100 transition-transform duration-300";
         if (type === 'success') {
@@ -709,6 +767,57 @@
       }
       
       // ----------------------------------------------------------------------------------
+      // Lógica de Logs
+      // ----------------------------------------------------------------------------------
+
+      /**
+       * Busca e armazena as informações do dispositivo e o IP público.
+       */
+      async function fetchDeviceInfoAndIP() {
+        try {
+          const response = await fetch('https://ipapi.co/json/');
+          const data = await response.json();
+          const ip = data.ip || "IP não disponível";
+          const userAgent = navigator.userAgent;
+
+          deviceAndIpInfo = `IP: ${ip} | Dispositivo: ${userAgent}`;
+          // Adiciona a primeira entrada de log
+          addLogEntry("Informações do dispositivo carregadas.", "info");
+
+        } catch (error) {
+          deviceAndIpInfo = `Erro ao obter IP: ${error.message}`;
+          addLogEntry(deviceAndIpInfo, "error");
+          console.error("Erro ao obter o IP:", error);
+        }
+      }
+
+      /**
+       * Renderiza a tabela de logs com os dados mais recentes.
+       */
+      function renderLogTable() {
+        // Limpa a tabela
+        logsTableBody.innerHTML = '';
+        
+        // Adiciona as novas linhas, do mais recente para o mais antigo
+        systemLogs.slice().reverse().forEach(log => {
+          const row = logsTableBody.insertRow();
+          row.className = `border-b border-gray-700 text-sm sm:text-base ${log.type === 'error' ? 'bg-red-900 text-red-200' : 'bg-gray-800'}`;
+          
+          const timestampCell = row.insertCell(0);
+          timestampCell.textContent = log.timestamp;
+          timestampCell.className = "p-2 sm:p-3 break-words";
+
+          const deviceCell = row.insertCell(1);
+          deviceCell.textContent = log.device;
+          deviceCell.className = "p-2 sm:p-3 break-words";
+
+          const messageCell = row.insertCell(2);
+          messageCell.textContent = log.message;
+          messageCell.className = "p-2 sm:p-3 break-words";
+        });
+      }
+
+      // ----------------------------------------------------------------------------------
       // Lógica dos Modais e Event Listeners
       // ----------------------------------------------------------------------------------
 
@@ -796,6 +905,9 @@
       // Event listeners para os botões de navegação
       navCalculator.addEventListener('click', () => showPage('calculator-page'));
       navShoppingList.addEventListener('click', () => showPage('shopping-list-page'));
+      navLogs.addEventListener('click', () => {
+        showPage('logs-page');
+      });
 
       // Lógica de segurança: para a câmera quando a página não está ativa
       document.addEventListener('visibilitychange', () => {
