@@ -26,23 +26,6 @@
     .table-container {
       overflow-x: auto;
     }
-    /* Estilo para o contêiner de vídeo */
-    #camera-container {
-      position: relative;
-      width: 100%;
-      padding-top: 75%; /* Proporção 4:3 */
-      overflow: hidden;
-      border-radius: 0.75rem; /* rounded-xl */
-      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-    }
-    #camera-video {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
   </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
@@ -53,7 +36,6 @@
     <div class="flex justify-center space-x-4">
       <button id="nav-calculator" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Calculadora</button>
       <button id="nav-shopping-list" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Lista de Compras</button>
-      <button id="nav-camera" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Câmera</button>
     </div>
   </nav>
 
@@ -61,7 +43,7 @@
   <main class="flex-grow p-4 sm:p-6 lg:p-8">
 
     <!-- Caixa de mensagens -->
-    <div id="message-box" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 bg-gray-700 text-white p-3 rounded-lg shadow-xl z-50 transition-transform duration-300 transform scale-0 origin-bottom"></div>
+    <div id="message-box" class="hidden fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-xl z-50 transition-transform duration-300 transform scale-0 origin-bottom"></div>
 
     <!-- Página Calculadora -->
     <div id="calculator-page" class="page-content flex flex-col gap-6">
@@ -88,6 +70,7 @@
 
       <div class="flex flex-col sm:flex-row justify-center gap-4 mt-4">
         <button id="addButton" class="flex-1 py-3 px-6 rounded-full bg-green-500 hover:bg-green-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Adicionar Produto</button>
+        <button id="cameraScanBtn" class="flex-1 py-3 px-6 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Identificar com Câmera</button>
         <button id="savePDFButton" class="flex-1 py-3 px-6 rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Salvar PDF</button>
       </div>
 
@@ -135,25 +118,37 @@
       </div>
     </div>
 
-    <!-- Nova Página de Câmera -->
-    <div id="camera-page" class="page-content hidden flex flex-col items-center gap-6">
-      <h1 class="text-2xl font-bold text-center sm:text-3xl">Identificação por Câmera</h1>
-      <p class="text-center text-gray-400 max-w-2xl mx-auto">Use a câmera traseira do seu dispositivo para capturar uma imagem. A câmera só será ativada com sua permissão.</p>
-
-      <div id="camera-container" class="w-full sm:max-w-xl">
-        <video id="camera-video" class="rounded-xl shadow-lg bg-gray-800" playsinline autoplay></video>
+    <!-- Modal para Identificação de Produto por Câmera -->
+    <div id="camera-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-2/3 md:w-1/2 lg:w-1/3 shadow-2xl relative">
+        <h2 class="text-xl font-bold mb-4 text-center">Identificar Produto com Câmera</h2>
+        
+        <!-- Contêiner do vídeo da câmera -->
+        <div class="w-full aspect-video rounded-lg overflow-hidden mb-4 bg-gray-900">
+          <video id="camera-video" class="w-full h-full object-cover" autoplay playsinline></video>
+        </div>
         <canvas id="camera-canvas" class="hidden"></canvas>
-      </div>
 
-      <div class="flex flex-col sm:flex-row justify-center gap-4 mt-4 w-full sm:max-w-xl">
-        <button id="start-camera-btn" class="py-3 px-6 rounded-full bg-green-500 hover:bg-green-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto">Ativar Câmera</button>
-        <button id="capture-image-btn" class="py-3 px-6 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto hidden">Capturar Imagem</button>
-      </div>
+        <!-- Botões de ação da câmera -->
+        <div class="flex justify-center gap-4 mb-4">
+          <button id="capture-image-btn" class="py-3 px-6 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors shadow-md text-sm sm:text-base font-semibold">
+            Capturar
+          </button>
+        </div>
 
-      <div id="captured-image-container" class="mt-8 hidden w-full sm:max-w-xl flex flex-col gap-4 items-center">
-        <h2 class="text-xl font-bold">Imagem Capturada:</h2>
-        <img id="captured-image" class="rounded-lg shadow-lg" alt="Imagem Capturada" />
-        <button id="clear-image-btn" class="py-2 px-4 rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Limpar Imagem</button>
+        <!-- Formulário para o produto identificado -->
+        <div id="product-form" class="hidden flex flex-col gap-4">
+          <p class="text-center font-bold">Produto Identificado:</p>
+          <input type="text" id="identified-product-name" placeholder="Nome do Produto" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="number" id="modal-unit-price" placeholder="Valor Unit." class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          <input type="number" id="modal-quantity" placeholder="Quantidade" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        </div>
+        
+        <!-- Botões de ação do modal -->
+        <div class="flex justify-end gap-2 mt-4">
+          <button id="modal-cancel-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
+          <button id="modal-add-button" class="bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg transition-colors hidden">Adicionar</button>
+        </div>
       </div>
     </div>
 
@@ -164,7 +159,7 @@
         <p class="text-sm text-center mb-4 text-gray-400">Para usar a IA, você precisa da sua API Key.</p>
         <input type="text" id="modal-api-key-input" placeholder="Cole sua API Key aqui" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
         <div class="flex justify-end gap-2">
-          <button id="modal-cancel-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
+          <button id="modal-cancel-api-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
           <button id="modal-continue-button" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">Continuar</button>
         </div>
       </div>
@@ -193,6 +188,7 @@
     let jsPDF;
     // Variável global para armazenar o stream da câmera
     let cameraStream = null;
+    let geminiApiKey = "";
 
     // Função para carregar dinamicamente o jsPDF
     async function loadJsPDF() {
@@ -214,6 +210,7 @@
       const calculatorPage = document.getElementById("calculator-page");
       const tableBody = document.querySelector("#tabelaprod tbody");
       const addButton = document.getElementById("addButton");
+      const cameraScanBtn = document.getElementById("cameraScanBtn");
       const savePDFButton = document.getElementById("savePDFButton");
       const totalValueSpan = document.getElementById("totalvalue");
       const calculatorLocalStorageKey = "productCalculatorData";
@@ -230,25 +227,26 @@
       const apiKeyModal = document.getElementById("api-key-modal");
       const modalApiKeyInput = document.getElementById("modal-api-key-input");
       const modalContinueButton = document.getElementById("modal-continue-button");
-      const modalCancelButton = document.getElementById("modal-cancel-button");
+      const modalCancelApiButton = document.getElementById("modal-cancel-api-button");
       const instructionsButton = document.getElementById("instructionsButton");
       const instructionsModal = document.getElementById("instructions-modal");
       const closeInstructions = document.getElementById("closeInstructions");
 
-      const cameraPage = document.getElementById("camera-page");
-      const cameraVideo = document.getElementById("camera-video");
-      const cameraCanvas = document.getElementById("camera-canvas");
-      const startCameraBtn = document.getElementById("start-camera-btn");
-      const captureImageBtn = document.getElementById("capture-image-btn");
-      const capturedImage = document.getElementById("captured-image");
-      const capturedImageContainer = document.getElementById("captured-image-container");
-      const clearImageBtn = document.getElementById("clear-image-btn");
-
       const navCalculator = document.getElementById('nav-calculator');
       const navShoppingList = document.getElementById('nav-shopping-list');
-      const navCamera = document.getElementById('nav-camera');
       const messageBox = document.getElementById('message-box');
-      let geminiApiKey = "";
+
+      // Seletores do novo modal de câmera
+      const cameraModal = document.getElementById("camera-modal");
+      const cameraVideo = document.getElementById("camera-video");
+      const cameraCanvas = document.getElementById("camera-canvas");
+      const captureImageBtn = document.getElementById("capture-image-btn");
+      const identifiedProductNameInput = document.getElementById("identified-product-name");
+      const modalUnitPriceInput = document.getElementById("modal-unit-price");
+      const modalQuantityInput = document.getElementById("modal-quantity");
+      const modalAddButton = document.getElementById("modal-add-button");
+      const modalCancelButton = document.getElementById("modal-cancel-button");
+      const productForm = document.getElementById("product-form");
       let isCameraActive = false;
 
       // ----------------------------------------------------------------------------------
@@ -310,8 +308,11 @@
       
       /**
        * Adiciona uma nova linha à tabela da calculadora.
+       * @param {string} product O nome do produto (opcional).
+       * @param {number} unitPrice O preço unitário (opcional).
+       * @param {number} quantity A quantidade (opcional).
        */
-      function addNewRow() {
+      function addNewRow(product = '', unitPrice = '', quantity = '') {
         const row = tableBody.insertRow();
         row.className = "border-b border-gray-700 last:border-0";
         const newId = tableBody.rows.length;
@@ -319,9 +320,9 @@
 
         row.innerHTML = `
           <td class="p-2 sm:p-3 text-center text-gray-400 text-sm sm:text-base">${newId < 10 ? '0' + newId : newId}</td>
-          <td class="p-2 sm:p-3"><input type="text" name="product" placeholder="Produto" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
-          <td class="p-2 sm:p-3"><input type="number" name="unitprice" placeholder="R$" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
-          <td class="p-2 sm:p-3"><input type="number" name="quantity" placeholder="Qtd." class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
+          <td class="p-2 sm:p-3"><input type="text" name="product" placeholder="Produto" value="${product}" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
+          <td class="p-2 sm:p-3"><input type="number" name="unitprice" placeholder="R$" value="${unitPrice}" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
+          <td class="p-2 sm:p-3"><input type="number" name="quantity" placeholder="Qtd." value="${quantity}" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
           <td name="total" class="p-2 sm:p-3 font-semibold text-right text-sm sm:text-base">R$ 0.00</td>
           <td class="p-2 sm:p-3 text-center"><button class="remove-row-btn p-1 rounded-full bg-red-600 hover:bg-red-700 transition-colors shadow-md">
             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
@@ -344,8 +345,21 @@
           updateTotalAndSave();
         });
 
-        // Salva os dados após a adição da linha
+        // Atualiza o total se os valores forem preenchidos
+        updateRowTotal(row);
         saveDataFromCalculator();
+      }
+      
+      /**
+       * Atualiza o valor total de uma única linha da tabela.
+       * @param {HTMLElement} row O elemento tr da linha.
+       */
+      function updateRowTotal(row) {
+        const unitPrice = parseFloat(row.querySelector("input[name='unitprice']").value) || 0;
+        const quantity = parseFloat(row.querySelector("input[name='quantity']").value) || 0;
+        const total = unitPrice * quantity;
+        row.querySelector("td[name='total']").textContent = `R$ ${total.toFixed(2)}`;
+        updateTotalAndSave();
       }
 
       /**
@@ -354,11 +368,7 @@
        */
       function updateRowTotalAndSave(event) {
         const row = event.target.closest('tr');
-        const unitPrice = parseFloat(row.querySelector("input[name='unitprice']").value) || 0;
-        const quantity = parseFloat(row.querySelector("input[name='quantity']").value) || 0;
-        const total = unitPrice * quantity;
-        row.querySelector("td[name='total']").textContent = `R$ ${total.toFixed(2)}`;
-        updateTotalAndSave();
+        updateRowTotal(row);
       }
 
       /**
@@ -405,37 +415,7 @@
         const savedData = loadDataFromLocalStorage(calculatorLocalStorageKey);
         if (savedData.length > 0) {
           savedData.forEach(item => {
-            const row = tableBody.insertRow();
-            row.className = "border-b border-gray-700 last:border-0";
-            const newId = tableBody.rows.length;
-            row.dataset.id = newId;
-
-            row.innerHTML = `
-              <td class="p-2 sm:p-3 text-center text-gray-400 text-sm sm:text-base">${newId < 10 ? '0' + newId : newId}</td>
-              <td class="p-2 sm:p-3"><input type="text" name="product" placeholder="Produto" value="${item.product || ''}" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
-              <td class="p-2 sm:p-3"><input type="number" name="unitprice" placeholder="R$" value="${item.unitPrice || ''}" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
-              <td class="p-2 sm:p-3"><input type="number" name="quantity" placeholder="Qtd." value="${item.quantity || ''}" class="w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" /></td>
-              <td name="total" class="p-2 sm:p-3 font-semibold text-right text-sm sm:text-base">R$ ${((item.unitPrice || 0) * (item.quantity || 0)).toFixed(2)}</td>
-              <td class="p-2 sm:p-3 text-center"><button class="remove-row-btn p-1 rounded-full bg-red-600 hover:bg-red-700 transition-colors shadow-md">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
-                  <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 11-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
-                </svg>
-              </button></td>
-            `;
-
-            // Adiciona listeners aos campos
-            const unitPriceInput = row.querySelector("input[name='unitprice']");
-            const quantityInput = row.querySelector("input[name='quantity']");
-            const productInput = row.querySelector("input[name='product']");
-            const removeButton = row.querySelector(".remove-row-btn");
-
-            unitPriceInput.addEventListener("input", updateRowTotalAndSave);
-            quantityInput.addEventListener("input", updateRowTotalAndSave);
-            productInput.addEventListener("input", saveDataFromCalculator);
-            removeButton.addEventListener("click", function() {
-              row.remove();
-              updateTotalAndSave();
-            });
+            addNewRow(item.product, item.unitPrice, item.quantity);
           });
           updateTotalAndSave(); // Recalcula o total
         }
@@ -612,7 +592,7 @@
       }
       
       // ----------------------------------------------------------------------------------
-      // Lógica da Câmera
+      // Lógica da Câmera e Identificação de Produto
       // ----------------------------------------------------------------------------------
       
       /**
@@ -621,18 +601,16 @@
       async function startCamera() {
         if (!isCameraActive) {
           try {
-            // Solicita acesso à câmera traseira do dispositivo
             const constraints = { video: { facingMode: 'environment' } };
             cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
             cameraVideo.srcObject = cameraStream;
             isCameraActive = true;
-            captureImageBtn.classList.remove('hidden');
-            startCameraBtn.classList.add('hidden');
-            showMessage("Câmera ativada. Pode capturar a imagem.", "success");
           } catch (err) {
             console.error('Erro ao acessar a câmera:', err);
             showMessage("Acesso à câmera negado ou indisponível.", "error");
             isCameraActive = false;
+            // Fecha o modal se a câmera não puder ser ativada
+            cameraModal.classList.add('hidden');
           }
         }
       }
@@ -645,48 +623,93 @@
           cameraStream.getTracks().forEach(track => track.stop());
           cameraVideo.srcObject = null;
           isCameraActive = false;
-          captureImageBtn.classList.add('hidden');
-          startCameraBtn.classList.remove('hidden');
         }
       }
 
       /**
-       * Captura uma imagem do stream de vídeo e a exibe.
+       * Captura uma imagem do stream de vídeo, chama a IA para identificar o produto e preenche o modal.
        */
-      function captureImage() {
+      async function captureAndIdentify() {
         if (!isCameraActive) {
           showMessage("A câmera não está ativa.", "error");
           return;
         }
+        
+        if (!geminiApiKey) {
+          apiKeyModal.classList.remove('hidden');
+          showMessage("Por favor, insira sua API Key.", "info");
+          return;
+        }
+
+        // Para a câmera imediatamente para economizar recursos
+        stopCamera();
 
         // Configura o canvas para a mesma resolução do vídeo
         cameraCanvas.width = cameraVideo.videoWidth;
         cameraCanvas.height = cameraVideo.videoHeight;
         const context = cameraCanvas.getContext('2d');
-        
-        // Desenha o frame atual do vídeo no canvas
         context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
         
-        // Converte a imagem do canvas para uma URL base64 e exibe
+        // Converte a imagem para uma URL base64
         const imageDataUrl = cameraCanvas.toDataURL('image/png');
-        capturedImage.src = imageDataUrl;
-        capturedImageContainer.classList.remove('hidden');
-        
-        // Para a câmera para economizar bateria
-        stopCamera();
-        
-        showMessage("Imagem capturada com sucesso!", "success");
-        // Loga a URL da imagem no console para teste
-        console.log("Imagem capturada (Base64):", imageDataUrl.substring(0, 50) + "...");
-      }
+        const base64Data = imageDataUrl.split(',')[1];
 
+        showMessage("Identificando produto...", "info");
+        productForm.classList.add('hidden');
+        modalAddButton.classList.add('hidden');
+        
+        // Chama a API do Gemini para identificar o produto
+        try {
+          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+          const payload = {
+            contents: [{
+              parts: [
+                { text: `Identifique o produto principal nesta imagem. Responda APENAS com o nome do produto. Se não puder identificar, responda com 'Produto não identificado'.` },
+                { inlineData: { mimeType: "image/png", data: base64Data } }
+              ]
+            }],
+          };
+          
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+          }
+          
+          const result = await response.json();
+          const identifiedText = result?.candidates?.[0]?.content?.parts?.[0]?.text || 'Produto não identificado';
+          
+          identifiedProductNameInput.value = identifiedText.trim();
+          productForm.classList.remove('hidden');
+          modalAddButton.classList.remove('hidden');
+          showMessage("Identificação completa!", "success");
+
+        } catch (error) {
+          console.error("Erro na identificação com IA:", error);
+          identifiedProductNameInput.value = "Erro na identificação";
+          showMessage("Falha na identificação do produto. Tente novamente.", "error");
+          productForm.classList.remove('hidden');
+          modalAddButton.classList.remove('hidden');
+        }
+      }
+      
       // ----------------------------------------------------------------------------------
       // Lógica dos Modais e Event Listeners
       // ----------------------------------------------------------------------------------
 
       // Event Listeners da Calculadora
-      addButton.addEventListener("click", addNewRow);
+      addButton.addEventListener("click", () => addNewRow());
       savePDFButton.addEventListener("click", saveTableAsPDF);
+      
+      // Novo Event Listener para o botão de câmera
+      cameraScanBtn.addEventListener("click", () => {
+        cameraModal.classList.remove('hidden');
+        startCamera();
+      });
 
       // Event Listeners da Lista de Compras
       addProductListButton.addEventListener("click", addManualShoppingItem);
@@ -699,16 +722,30 @@
         }
       });
 
-      // Event Listeners da Câmera
-      startCameraBtn.addEventListener('click', startCamera);
-      captureImageBtn.addEventListener('click', captureImage);
-      clearImageBtn.addEventListener('click', () => {
-        capturedImageContainer.classList.add('hidden');
-        capturedImage.src = "";
-        showMessage("Imagem limpa.", "info");
+      // Event Listeners do Modal da Câmera
+      captureImageBtn.addEventListener("click", captureAndIdentify);
+
+      modalAddButton.addEventListener("click", () => {
+        const product = identifiedProductNameInput.value.trim();
+        const unitPrice = modalUnitPriceInput.value.trim();
+        const quantity = modalQuantityInput.value.trim();
+
+        if (!product || !unitPrice || !quantity) {
+          showMessage("Por favor, preencha todos os campos do modal.", "error");
+          return;
+        }
+
+        addNewRow(product, unitPrice, quantity);
+        cameraModal.classList.add('hidden');
+        showMessage("Produto adicionado com sucesso!", "success");
       });
-      
-      // Event Listeners dos Modais
+
+      modalCancelButton.addEventListener("click", () => {
+        cameraModal.classList.add('hidden');
+        stopCamera();
+      });
+
+      // Event Listeners dos Modais de API Key
       modalContinueButton.addEventListener('click', () => {
         geminiApiKey = modalApiKeyInput.value.trim();
         apiKeyModal.classList.add('hidden');
@@ -722,7 +759,7 @@
         }
       });
 
-      modalCancelButton.addEventListener('click', () => {
+      modalCancelApiButton.addEventListener('click', () => {
         apiKeyModal.classList.add('hidden');
         showMessage("Funcionalidade de IA ignorada.", 'info');
       });
@@ -743,28 +780,17 @@
       function showPage(pageId) {
         document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
         document.getElementById(pageId).classList.remove('hidden');
-        
-        // Lógica de segurança: para a câmera se a página for trocada
-        if (pageId !== 'camera-page') {
-          stopCamera();
-        }
       }
 
       // Event listeners para os botões de navegação
       navCalculator.addEventListener('click', () => showPage('calculator-page'));
       navShoppingList.addEventListener('click', () => showPage('shopping-list-page'));
-      navCamera.addEventListener('click', () => showPage('camera-page'));
 
       // Lógica de segurança: para a câmera quando a página não está ativa
       document.addEventListener('visibilitychange', () => {
-        const onCameraPage = !cameraPage.classList.contains('hidden');
         if (document.hidden && isCameraActive) {
           stopCamera();
-          showMessage("Câmera desativada por segurança (página em segundo plano).", "info");
-        } else if (!document.hidden && onCameraPage) {
-          // Opcional: Reativar a câmera automaticamente ou com um aviso
-          // startCamera(); // Esta linha poderia ser re-habilitada para reativar automaticamente
-          showMessage("Câmera pode ser reativada. Clique no botão Iniciar.", "info");
+          // Não mostra mensagem, pois o modal estará fechado
         }
       });
       
