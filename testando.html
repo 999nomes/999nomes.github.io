@@ -122,14 +122,18 @@
     <!-- Página de Logs -->
     <div id="logs-page" class="page-content hidden flex flex-col gap-6">
       <h1 class="text-2xl font-bold text-center sm:text-3xl">Logs do Sistema</h1>
-      <p class="text-center text-gray-400 max-w-2xl mx-auto">Aqui você pode visualizar as atividades e notificações do aplicativo em tempo real.</p>
+      <p class="text-center text-gray-400 max-w-2xl mx-auto">Aqui você pode visualizar as atividades e notificações do aplicativo.</p>
       
-      <div class="table-container bg-gray-800 rounded-lg shadow-lg p-4">
+      <div class="flex flex-col sm:flex-row justify-end gap-4">
+        <button id="exportLogsBtn" class="py-3 px-6 rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Exportar Logs para PDF</button>
+      </div>
+
+      <div class="table-container bg-gray-800 rounded-lg shadow-lg p-4 mt-4">
         <table id="logs-table" class="w-full text-left table-auto">
           <thead class="bg-gray-700 text-gray-200 uppercase text-xs sm:text-sm">
             <tr>
               <th class="p-2 sm:p-3 rounded-tl-lg">Data/Horário</th>
-              <th class="p-2 sm:p-3">IP/Dispositivo</th>
+              <th class="p-2 sm:p-3">Dispositivo</th>
               <th class="p-2 sm:p-3 rounded-tr-lg">Mensagem</th>
             </tr>
           </thead>
@@ -213,7 +217,8 @@
     let cameraStream = null;
     let geminiApiKey = "";
     let systemLogs = []; // Array para armazenar os logs
-    let deviceAndIpInfo = "Carregando..."; // Variável global para o IP e info do dispositivo
+    // Variável global para informações do dispositivo
+    let deviceAndIpInfo = "";
 
     // Função para carregar dinamicamente o jsPDF
     async function loadJsPDF() {
@@ -223,6 +228,26 @@
       } else {
         jsPDF = window.jspdf.jsPDF;
       }
+    }
+
+    /**
+     * Tenta buscar o endereço IP público e o agente do navegador.
+     * Retorna uma string formatada ou uma mensagem de erro.
+     */
+    async function fetchDeviceInfoAndIP() {
+        let ip = "Não disponível";
+        try {
+            const response = await fetch("https://api.ipify.org?format=json");
+            if (response.ok) {
+                const data = await response.json();
+                ip = data.ip;
+            } else {
+                console.error("Erro ao obter o IP: Resposta não OK", response.status);
+            }
+        } catch (error) {
+            console.error("Erro ao obter o IP:", error);
+        }
+        return `Navegador: ${navigator.userAgent} | IP: ${ip}`;
     }
 
     // Espera o DOM carregar completamente
@@ -247,6 +272,7 @@
       
       const logsPage = document.getElementById("logs-page");
       const logsTableBody = document.getElementById("logs-table-body");
+      const exportLogsBtn = document.getElementById("exportLogsBtn");
 
       const geminiPromptInput = document.getElementById("gemini-prompt");
       const generateListButton = document.getElementById("generate-list-button");
@@ -278,7 +304,8 @@
       
       // Carrega bibliotecas e informações do dispositivo
       await loadJsPDF();
-      await fetchDeviceInfoAndIP();
+      deviceAndIpInfo = await fetchDeviceInfoAndIP();
+      addLogEntry("Aplicação iniciada.", "info");
 
       // ----------------------------------------------------------------------------------
       // Funções de Utilidade
@@ -769,28 +796,7 @@
       // ----------------------------------------------------------------------------------
       // Lógica de Logs
       // ----------------------------------------------------------------------------------
-
-      /**
-       * Busca e armazena as informações do dispositivo e o IP público.
-       */
-      async function fetchDeviceInfoAndIP() {
-        try {
-          const response = await fetch('https://ipapi.co/json/');
-          const data = await response.json();
-          const ip = data.ip || "IP não disponível";
-          const userAgent = navigator.userAgent;
-
-          deviceAndIpInfo = `IP: ${ip} | Dispositivo: ${userAgent}`;
-          // Adiciona a primeira entrada de log
-          addLogEntry("Informações do dispositivo carregadas.", "info");
-
-        } catch (error) {
-          deviceAndIpInfo = `Erro ao obter IP: ${error.message}`;
-          addLogEntry(deviceAndIpInfo, "error");
-          console.error("Erro ao obter o IP:", error);
-        }
-      }
-
+      
       /**
        * Renderiza a tabela de logs com os dados mais recentes.
        */
@@ -817,6 +823,81 @@
         });
       }
 
+      /**
+       * Exporta os logs para um arquivo PDF.
+       */
+      function exportLogsToPDF() {
+        if (systemLogs.length === 0) {
+          showMessage("Não há logs para exportar.", "info");
+          return;
+        }
+
+        showMessage("Exportando logs para PDF...", "info");
+        const doc = new jsPDF();
+        let y = 20;
+        const margin = 10;
+        const pageHeight = doc.internal.pageSize.getHeight();
+        
+        // Título e cabeçalho
+        doc.setFontSize(16);
+        doc.text("Logs do Sistema", margin, y);
+        y += 10;
+        doc.setFontSize(10);
+        
+        const headers = ["Data/Horário", "Dispositivo", "Mensagem"];
+        const columnWidths = [45, 80, 75]; // Larguras ajustadas para as colunas
+
+        // Desenha a linha do cabeçalho
+        doc.setFont("helvetica", "bold");
+        doc.text(headers[0], margin, y);
+        doc.text(headers[1], margin + columnWidths[0], y);
+        doc.text(headers[2], margin + columnWidths[0] + columnWidths[1], y);
+        doc.setFont("helvetica", "normal");
+        y += 5;
+        doc.setLineWidth(0.5);
+        doc.line(margin, y, doc.internal.pageSize.getWidth() - margin, y);
+        y += 5;
+
+        // Itera sobre os logs e adiciona ao PDF
+        doc.setFontSize(8);
+        systemLogs.forEach(log => {
+          // Verifica se precisa de uma nova página
+          if (y + 10 > pageHeight - margin) {
+            doc.addPage();
+            y = margin + 10;
+            doc.setFontSize(10);
+            doc.setFont("helvetica", "bold");
+            doc.text(headers[0], margin, y);
+            doc.text(headers[1], margin + columnWidths[0], y);
+            doc.text(headers[2], margin + columnWidths[0] + columnWidths[1], y);
+            doc.setFont("helvetica", "normal");
+            y += 5;
+            doc.setLineWidth(0.5);
+            doc.line(margin, y, doc.internal.pageSize.getWidth() - margin, y);
+            y += 5;
+            doc.setFontSize(8);
+          }
+
+          // Adiciona a linha do log
+          const formattedText = [log.timestamp, log.device, log.message];
+          
+          // Usa a função `splitTextToSize` para quebrar a mensagem se for muito longa
+          const messageLines = doc.splitTextToSize(formattedText[2], columnWidths[2] - 5);
+          
+          doc.text(formattedText[0], margin, y);
+          doc.text(formattedText[1], margin + columnWidths[0], y);
+          doc.text(messageLines, margin + columnWidths[0] + columnWidths[1], y);
+          
+          // Calcula a próxima posição Y com base no número de linhas da mensagem
+          y += (messageLines.length * 4) + 2; // Ajusta o espaçamento
+        });
+
+        // Salva o documento
+        doc.save("logs_do_sistema.pdf");
+        showMessage("PDF dos logs salvo com sucesso!", "success");
+      }
+
+
       // ----------------------------------------------------------------------------------
       // Lógica dos Modais e Event Listeners
       // ----------------------------------------------------------------------------------
@@ -841,6 +922,9 @@
           showMessage("Por favor, digite o que você precisa.", "error");
         }
       });
+      
+      // Event Listener para exportar os logs
+      exportLogsBtn.addEventListener("click", exportLogsToPDF);
 
       // Event Listeners do Modal da Câmera
       captureImageBtn.addEventListener("click", captureAndIdentify);
