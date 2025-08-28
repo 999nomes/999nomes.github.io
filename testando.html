@@ -524,7 +524,8 @@
               apiKey = inputKey;
               localStorage.setItem(apiKeyLocalStorageKey, apiKey);
               apiKeyModal.classList.add('hidden');
-              generateListWithGemini();
+              // Optionally trigger the functionality that required the API key
+              // For example, if they clicked 'Gerar Lista'
           } else {
               showMessage("Insira uma chave válida.", 'error');
           }
@@ -541,14 +542,24 @@
       async function openCameraModal() {
           cameraModal.classList.remove('hidden');
           try {
-              cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
-              cameraFeed.srcObject = cameraStream;
-              cameraFeed.play();
+              // Tenta a câmera traseira (modo ambiente) primeiro
+              cameraStream = await navigator.mediaDevices.getUserMedia({
+                  video: { facingMode: { exact: "environment" } }
+              });
           } catch (err) {
-              console.error("Erro ao acessar a câmera:", err);
-              showMessage("Não foi possível acessar a câmera. Verifique as permissões.", 'error');
-              cameraModal.classList.add('hidden');
+              // Se falhar, tenta a câmera frontal (modo usuário) como fallback
+              console.error("Erro ao tentar a câmera traseira, tentando a frontal:", err);
+              try {
+                  cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+              } catch (err) {
+                  console.error("Erro ao acessar qualquer câmera:", err);
+                  showMessage("Não foi possível acessar a câmera. Verifique as permissões.", 'error');
+                  cameraModal.classList.add('hidden');
+                  return;
+              }
           }
+          cameraFeed.srcObject = cameraStream;
+          cameraFeed.play();
       }
 
       closeCameraButton.addEventListener('click', () => {
