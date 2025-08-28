@@ -10,6 +10,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <!-- Ícones -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
   <!-- Bibliotecas de terceiros -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -51,6 +53,15 @@
     }
     .light-mode input, .light-mode select {
       background-color: #d1d5db !important;
+      color: #1f2937 !important;
+    }
+    .light-mode .bg-gray-600 {
+      background-color: #9ca3af !important;
+    }
+    .light-mode .hover\:bg-gray-700:hover {
+      background-color: #6b7280 !important;
+    }
+    .light-mode .text-white {
       color: #1f2937 !important;
     }
     /* Estilo para a tabela em telas pequenas */
@@ -122,7 +133,7 @@
         <div class="flex flex-col sm:flex-row gap-4 items-end">
           <input type="text" id="gemini-prompt" placeholder="Ex: 'ingredientes para bolo de chocolate'" class="flex-grow w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
           <button id="generate-list-button" class="py-3 px-6 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto">Gerar Lista com IA</button>
-          <button id="instructionsButton" class="py-3 px-6 rounded-full bg-gray-500 hover:bg-gray-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto">Instruções</button>
+          <button id="instructionsButton" class="py-3 px-6 rounded-full bg-gray-500 hover:bg-gray-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto hidden">Instruções</button>
         </div>
       </div>
 
@@ -152,19 +163,18 @@
 
     <!-- Página de Configurações (nova) -->
     <div id="settings-page" class="page-content hidden flex flex-col gap-6">
-        <h1 class="text-2xl font-bold text-center sm:text-3xl">Configurações</h1>
-        <p class="text-center text-gray-400 max-w-2xl mx-auto">Gerencie as configurações do aplicativo e visualize os logs do sistema.</p>
+      <h1 class="text-2xl font-bold text-center sm:text-3xl">Configurações</h1>
+      <p class="text-center text-gray-400 max-w-2xl mx-auto">Gerencie as configurações do aplicativo e visualize os logs do sistema.</p>
 
-        <!-- Seção de Tema -->
-        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-4">
-            <h2 class="text-xl font-semibold mb-2">Tema da Interface</h2>
-            <div class="flex justify-between items-center">
-                <span class="text-gray-400">Alterar para:</span>
-                <button id="theme-toggle-btn" class="py-2 px-4 rounded-full bg-gray-600 hover:bg-gray-700 transition-colors shadow-md font-semibold">Modo Claro</button>
-            </div>
-        </div>
+      <!-- Sub-navegação das configurações -->
+      <div class="flex justify-center bg-gray-800 rounded-lg p-2 gap-2">
+        <button id="settings-nav-logs" class="py-2 px-4 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors font-semibold">Logs</button>
+        <button id="settings-nav-api" class="py-2 px-4 rounded-full hover:bg-gray-600 transition-colors font-semibold">API</button>
+        <button id="settings-nav-theme" class="py-2 px-4 rounded-full hover:bg-gray-600 transition-colors font-semibold">Tema</button>
+      </div>
 
-        <!-- Seção de Logs (movida para cá) -->
+      <!-- Conteúdo da sub-aba de Logs -->
+      <div id="settings-content-logs" class="settings-content flex flex-col gap-4">
         <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-4">
             <h2 class="text-xl font-semibold mb-2">Logs do Sistema</h2>
             <p class="text-gray-400 text-sm">Aqui você pode visualizar as atividades e notificações do aplicativo.</p>
@@ -188,6 +198,32 @@
                 </table>
             </div>
         </div>
+      </div>
+
+      <!-- Conteúdo da sub-aba de API -->
+      <div id="settings-content-api" class="settings-content hidden flex-col gap-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-semibold mb-2">Gerenciar API Key do Gemini</h2>
+            <p class="text-gray-400 text-sm mb-2">Sua chave será salva localmente, garantindo o acesso às funcionalidades de IA sem precisar inseri-la novamente.</p>
+            <button id="instructions-btn-api" class="py-2 px-4 rounded-full bg-gray-600 hover:bg-gray-700 transition-colors shadow-md font-semibold self-start mb-2">Instruções</button>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <input type="text" id="api-key-input" placeholder="Cole sua API Key aqui" class="flex-grow w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-md p-3 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                <button id="save-api-key-btn" class="py-3 px-6 rounded-full bg-green-500 hover:bg-green-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto">Salvar API Key</button>
+            </div>
+        </div>
+      </div>
+      
+      <!-- Conteúdo da sub-aba de Tema -->
+      <div id="settings-content-theme" class="settings-content hidden flex-col gap-4">
+        <div class="bg-gray-800 rounded-lg shadow-lg p-6 flex flex-col gap-4">
+            <h2 class="text-xl font-semibold mb-2">Tema da Interface</h2>
+            <div class="flex justify-between items-center">
+                <span class="text-gray-400">Alterar para:</span>
+                <button id="theme-toggle-btn" class="py-2 px-4 rounded-full bg-gray-600 hover:bg-gray-700 transition-colors shadow-md font-semibold">Modo Escuro</button>
+            </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Modal de Confirmação de Exclusão (novo) -->
@@ -236,20 +272,7 @@
       </div>
     </div>
 
-    <!-- Modal de API Key -->
-    <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
-      <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
-        <h2 class="text-xl font-bold mb-4 text-center">API Key do Gemini</h2>
-        <p class="text-sm text-center mb-4 text-gray-400">Para usar a IA, você precisa da sua API Key.</p>
-        <input type="text" id="modal-api-key-input" placeholder="Cole sua API Key aqui" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <div class="flex justify-end gap-2">
-          <button id="modal-cancel-api-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
-          <button id="modal-continue-button" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">Continuar</button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Modal de Instruções -->
+    <!-- Modal de Instruções (mantido para ser usado na aba API) -->
     <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
       <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
         <h2 class="text-xl font-bold mb-4 text-center">Como obter sua API Key do Gemini</h2>
@@ -272,7 +295,7 @@
     let jsPDF;
     // Variável global para armazenar o stream da câmera
     let cameraStream = null;
-    let geminiApiKey = "";
+    let geminiApiKey = ""; // A chave da API agora é gerenciada aqui
     let systemLogs = []; // Array para armazenar os logs
     // Variável global para informações do dispositivo
     let deviceAndIpInfo = "";
@@ -280,6 +303,8 @@
     // Variável para armazenar o modo do tema ('dark' ou 'light')
     let currentTheme = 'dark';
     const themeStorageKey = 'appTheme';
+    const apiKeyStorageKey = 'geminiApiKey';
+    const apiCheckEndpoint = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=';
 
     /**
      * Tenta buscar o endereço IP público e o agente do navegador.
@@ -340,18 +365,7 @@
 
       const geminiPromptInput = document.getElementById("gemini-prompt");
       const generateListButton = document.getElementById("generate-list-button");
-      const apiKeyModal = document.getElementById("api-key-modal");
-      const modalApiKeyInput = document.getElementById("modal-api-key-input");
-      const modalContinueButton = document.getElementById("modal-continue-button");
-      const modalCancelApiButton = document.getElementById("modal-cancel-api-button");
       const instructionsButton = document.getElementById("instructionsButton");
-      const instructionsModal = document.getElementById("instructions-modal");
-      const closeInstructions = document.getElementById("closeInstructions");
-
-      const navCalculator = document.getElementById('nav-calculator');
-      const navShoppingList = document.getElementById('nav-shopping-list');
-      const navSettings = document.getElementById('nav-settings');
-      const messageBox = document.getElementById('message-box');
 
       // Seletores do novo modal de confirmação de exclusão
       const confirmModal = document.getElementById("confirm-modal");
@@ -373,11 +387,35 @@
       const productForm = document.getElementById("product-form");
       let isCameraActive = false;
       
+      // Seletores dos modais de instrução
+      const instructionsModal = document.getElementById("instructions-modal");
+      const closeInstructions = document.getElementById("closeInstructions");
+
+      // Seletores da nova aba de configurações
+      const navCalculator = document.getElementById('nav-calculator');
+      const navShoppingList = document.getElementById('nav-shopping-list');
+      const navSettings = document.getElementById('nav-settings');
+      const settingsNavLogs = document.getElementById('settings-nav-logs');
+      const settingsNavApi = document.getElementById('settings-nav-api');
+      const settingsNavTheme = document.getElementById('settings-nav-theme');
+      const settingsContents = document.querySelectorAll('.settings-content');
+
+      // Seletores do conteúdo da aba API
+      const apiKeyInput = document.getElementById('api-key-input');
+      const saveApiKeyBtn = document.getElementById('save-api-key-btn');
+      const instructionsBtnApi = document.getElementById('instructions-btn-api');
+
       // Carrega bibliotecas e informações do dispositivo
       await loadJsPDF();
       deviceAndIpInfo = await fetchDeviceInfoAndIP();
       loadThemePreference();
+      loadApiKey();
       addLogEntry("Aplicação iniciada.", "info");
+      
+      // Verifica a API key ao iniciar
+      if (geminiApiKey) {
+        checkGeminiApiStatus();
+      }
 
       // ----------------------------------------------------------------------------------
       // Funções de Utilidade
@@ -416,6 +454,7 @@
         // Adiciona a mensagem ao log antes de exibi-la
         addLogEntry(message, type);
 
+        const messageBox = document.getElementById('message-box');
         messageBox.textContent = message;
         messageBox.className = "fixed bottom-4 left-1/2 -translate-x-1/2 p-3 rounded-lg shadow-xl z-50 transform scale-100 transition-transform duration-300";
         if (type === 'success') {
@@ -619,9 +658,21 @@
         row.dataset.id = index;
         row.className = "border-b border-gray-700 last:border-0 hover:bg-gray-800 transition-colors";
         row.innerHTML = `
-          <td class="p-2 sm:p-3 text-sm sm:text-base">${item.name}</td>
-          <td class="p-2 sm:p-3 text-sm sm:text-base">${item.price ? `R$ ${parseFloat(item.price).toFixed(2)}` : 'N/A'}</td>
-          <td class="p-2 sm:p-3 text-center">
+          <td class="p-2 sm:p-3 text-sm sm:text-base">
+            <span class="product-name-text">${item.name}</span>
+            <input type="text" class="product-name-input hidden w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" value="${item.name}" />
+          </td>
+          <td class="p-2 sm:p-3 text-sm sm:text-base">
+            <span class="product-price-text">${item.price ? `R$ ${parseFloat(item.price).toFixed(2)}` : 'N/A'}</span>
+            <input type="number" class="product-price-input hidden w-full bg-gray-700 text-white rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm sm:text-base" value="${item.price}" />
+          </td>
+          <td class="p-2 sm:p-3 text-center flex gap-2 justify-center items-center">
+            <button class="edit-list-item-btn p-1 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors shadow-md">
+              <i class="fas fa-edit text-white text-sm"></i>
+            </button>
+            <button class="save-list-item-btn hidden p-1 rounded-full bg-green-600 hover:bg-green-700 transition-colors shadow-md">
+              <i class="fas fa-save text-white text-sm"></i>
+            </button>
             <button class="remove-list-item-btn p-1 rounded-full bg-red-600 hover:bg-red-700 transition-colors shadow-md">
               <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" viewBox="0 0 20 20" fill="currentColor">
                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm6 0a1 1 0 11-2 0v6a1 1 0 112 0V8z" clip-rule="evenodd" />
@@ -630,7 +681,42 @@
           </td>
         `;
 
-        row.querySelector(".remove-list-item-btn").addEventListener("click", () => {
+        const editButton = row.querySelector(".edit-list-item-btn");
+        const saveButton = row.querySelector(".save-list-item-btn");
+        const removeButton = row.querySelector(".remove-list-item-btn");
+        const nameText = row.querySelector(".product-name-text");
+        const nameInput = row.querySelector(".product-name-input");
+        const priceText = row.querySelector(".product-price-text");
+        const priceInput = row.querySelector(".product-price-input");
+
+        editButton.addEventListener("click", () => {
+          nameText.classList.add("hidden");
+          nameInput.classList.remove("hidden");
+          priceText.classList.add("hidden");
+          priceInput.classList.remove("hidden");
+          editButton.classList.add("hidden");
+          saveButton.classList.remove("hidden");
+          addLogEntry(`Iniciada edição do item "${item.name}".`, 'info');
+        });
+
+        saveButton.addEventListener("click", () => {
+          let data = loadDataFromLocalStorage(shoppingListLocalStorageKey);
+          const newName = nameInput.value.trim();
+          const newPrice = priceInput.value.trim();
+          
+          if (newName === "") {
+            showMessage("O nome do produto não pode ser vazio.", "error");
+            return;
+          }
+
+          data[index].name = newName;
+          data[index].price = newPrice;
+          saveDataToLocalStorage(shoppingListLocalStorageKey, data);
+          loadDataFromShoppingListLocalStorage();
+          showMessage(`Item "${newName}" atualizado com sucesso!`, 'success');
+        });
+
+        removeButton.addEventListener("click", () => {
           showConfirmModal(item.name, () => {
             let data = loadDataFromLocalStorage(shoppingListLocalStorageKey);
             data.splice(index, 1);
@@ -668,12 +754,11 @@
        */
       async function callGeminiApi(prompt) {
         if (!geminiApiKey) {
-          apiKeyModal.classList.remove('hidden');
-          showMessage("Por favor, insira sua API Key.", "info");
+          showMessage("Por favor, adicione sua API Key na aba 'Configurações > API'.", "info");
           return;
         }
 
-        const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+        const apiUrl = `${apiCheckEndpoint}${geminiApiKey}`;
 
         showMessage("Gerando lista com IA...", "info");
 
@@ -703,7 +788,8 @@
           });
           
           if (!response.ok) {
-            throw new Error(`Erro na API: ${response.status} ${response.statusText}`);
+            const errorData = await response.json();
+            throw new Error(`Erro na API: ${response.status} ${errorData.error?.message || 'Erro desconhecido'}`);
           }
           
           const result = await response.json();
@@ -726,7 +812,8 @@
 
         } catch (error) {
           console.error("Erro ao gerar lista com IA:", error);
-          showMessage("Falha ao gerar lista. Verifique sua API Key ou tente novamente.", "error");
+          showMessage("Falha ao gerar lista. Verifique a chave da API em Configurações.", "error");
+          addLogEntry(`Erro ao gerar lista de compras: ${error.message}`, 'error');
         }
       }
 
@@ -781,9 +868,11 @@
             cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
             cameraVideo.srcObject = cameraStream;
             isCameraActive = true;
+            addLogEntry("Acesso à câmera iniciado.", 'info');
           } catch (err) {
             console.error('Erro ao acessar a câmera:', err);
             showMessage("Acesso à câmera negado ou indisponível.", "error");
+            addLogEntry(`Falha no acesso à câmera: ${err.message}`, 'error');
             isCameraActive = false;
             // Fecha o modal se a câmera não puder ser ativada
             cameraModal.classList.add('hidden');
@@ -799,6 +888,7 @@
           cameraStream.getTracks().forEach(track => track.stop());
           cameraVideo.srcObject = null;
           isCameraActive = false;
+          addLogEntry("Acesso à câmera encerrado.", 'info');
         }
       }
 
@@ -814,8 +904,8 @@
         
         // Verifica se a API Key foi fornecida antes de chamar a IA
         if (!geminiApiKey) {
-          apiKeyModal.classList.remove('hidden');
-          showMessage("Por favor, insira sua API Key para usar a identificação por IA.", "info");
+          showMessage("Por favor, adicione sua API Key na aba 'Configurações > API'.", "info");
+          stopCamera();
           return;
         }
 
@@ -838,12 +928,12 @@
         
         // Chama a API do Gemini para identificar o produto
         try {
-          const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${geminiApiKey}`;
+          const apiUrl = `${apiCheckEndpoint}${geminiApiKey}`;
           const payload = {
             contents: [{
               parts: [
                 // Prompt para a IA, instruindo-a a responder apenas com o nome do produto
-                { text: `Identifique o produto principal nesta imagem. Responda APENHAS com o nome do produto. Se não puder identificar, responda com 'Produto não identificado'.` },
+                { text: `Identifique o produto principal nesta imagem. Responda APENAS com o nome do produto. Se não puder identificar, responda com 'Produto não identificado'.` },
                 { inlineData: { mimeType: "image/png", data: base64Data } }
               ]
             }],
@@ -858,12 +948,7 @@
           // Trata erros da resposta da API, como status 400, 403, etc.
           if (!response.ok) {
             const errorData = await response.json();
-            console.error('Erro na resposta da API:', errorData);
-            let errorMessage = "Erro na API. Verifique sua chave e tente novamente.";
-            if (response.status === 400 && errorData.error && errorData.error.message.includes("API key not valid")) {
-                errorMessage = "API Key inválida. Por favor, verifique a chave no modal de instruções.";
-            }
-            throw new Error(errorMessage);
+            throw new Error(`Erro na API: ${response.status} ${errorData.error?.message || 'Erro desconhecido'}`);
           }
           
           const result = await response.json();
@@ -879,6 +964,7 @@
           console.error("Erro na identificação com IA:", error);
           identifiedProductNameInput.value = "Erro na identificação";
           showMessage(`Falha na identificação do produto: ${error.message}`, "error");
+          addLogEntry(`Falha na identificação do produto: ${error.message}`, 'error');
           productForm.classList.remove('hidden');
           modalAddButton.classList.remove('hidden');
         }
@@ -991,6 +1077,72 @@
       }
       
       // ----------------------------------------------------------------------------------
+      // Lógica de API
+      // ----------------------------------------------------------------------------------
+
+      /**
+       * Salva a API key no Local Storage.
+       */
+      function saveApiKey() {
+          const key = apiKeyInput.value.trim();
+          if (key) {
+              localStorage.setItem(apiKeyStorageKey, key);
+              geminiApiKey = key;
+              showMessage("API Key salva com sucesso.", "success");
+              checkGeminiApiStatus();
+          } else {
+              localStorage.removeItem(apiKeyStorageKey);
+              geminiApiKey = "";
+              showMessage("API Key removida.", "info");
+              // Oculta o botão de instruções se a chave foi removida
+              instructionsButton.classList.add('hidden');
+          }
+      }
+
+      /**
+       * Carrega a API key do Local Storage.
+       */
+      function loadApiKey() {
+          geminiApiKey = localStorage.getItem(apiKeyStorageKey) || "";
+          apiKeyInput.value = geminiApiKey;
+      }
+      
+      /**
+       * Verifica o status da API do Gemini com uma chamada de teste.
+       */
+      async function checkGeminiApiStatus() {
+        if (!geminiApiKey) {
+            addLogEntry("API Key não encontrada. Funcionalidades de IA desabilitadas.", "info");
+            instructionsButton.classList.remove('hidden');
+            return;
+        }
+
+        try {
+            const apiUrl = `${apiCheckEndpoint}${geminiApiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: "ping" }] }],
+                generationConfig: { maxOutputTokens: 1 }
+            };
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                addLogEntry("Comunicação com a API do Gemini bem-sucedida.", "success");
+                instructionsButton.classList.add('hidden');
+            } else {
+                const errorData = await response.json();
+                throw new Error(errorData.error?.message || response.statusText);
+            }
+        } catch (error) {
+            addLogEntry(`Erro de comunicação com a API do Gemini: ${error.message}. Verifique a chave.`, "error");
+            instructionsButton.classList.remove('hidden');
+        }
+      }
+
+      // ----------------------------------------------------------------------------------
       // Lógica de Tema (Modo Claro/Escuro)
       // ----------------------------------------------------------------------------------
       
@@ -1037,6 +1189,22 @@
         applyTheme();
         saveThemePreference();
       }
+      
+      /**
+       * Altera a aba visível dentro da página de Configurações.
+       * @param {string} tabId O ID da aba a ser exibida.
+       */
+      function showSettingsTab(tabId) {
+        settingsContents.forEach(content => content.classList.add('hidden'));
+        document.getElementById(tabId).classList.remove('hidden');
+        
+        // Remove a classe de destaque de todos os botões de sub-navegação
+        document.querySelectorAll('#settings-page button').forEach(btn => {
+            btn.classList.remove('bg-gray-700');
+        });
+        // Adiciona a classe de destaque ao botão da aba atual
+        document.getElementById(tabId.replace('settings-content-', 'settings-nav-')).classList.add('bg-gray-700');
+      }
 
       // ----------------------------------------------------------------------------------
       // Lógica dos Modais e Event Listeners
@@ -1048,6 +1216,10 @@
       
       // Event Listener para o botão de câmera
       cameraScanBtn.addEventListener("click", () => {
+        if (!geminiApiKey) {
+            showMessage("Por favor, adicione sua API Key na aba 'Configurações > API' para usar este recurso.", "info");
+            return;
+        }
         cameraModal.classList.remove('hidden');
         startCamera();
       });
@@ -1056,11 +1228,11 @@
       addProductListButton.addEventListener("click", addManualShoppingItem);
       generateListButton.addEventListener("click", () => {
         const promptText = geminiPromptInput.value.trim();
-        if (promptText) {
-          callGeminiApi(promptText);
-        } else {
+        if (!promptText) {
           showMessage("Por favor, digite o que você precisa.", "error");
+          return;
         }
+        callGeminiApi(promptText);
       });
       
       // Event Listener para exportar os logs
@@ -1102,28 +1274,15 @@
         stopCamera();
       });
 
-      // Event Listeners dos Modais de API Key
-      modalContinueButton.addEventListener('click', () => {
-        geminiApiKey = modalApiKeyInput.value.trim();
-        apiKeyModal.classList.add('hidden');
-        if (geminiApiKey) {
-          const promptText = geminiPromptInput.value.trim();
-          if (promptText) {
-            callGeminiApi(promptText);
-          }
-        } else {
-          showMessage("API Key inválida.", 'error');
-        }
-      });
-      modalCancelApiButton.addEventListener('click', () => {
-        apiKeyModal.classList.add('hidden');
-        showMessage("Funcionalidade de IA ignorada.", 'info');
-      });
+      // Event Listeners do Modal de Instruções
       instructionsButton.addEventListener("click", () => {
         instructionsModal.classList.remove("hidden");
       });
       closeInstructions.addEventListener("click", () => {
         instructionsModal.classList.add("hidden");
+      });
+      instructionsBtnApi.addEventListener("click", () => {
+        instructionsModal.classList.remove("hidden");
       });
       
       // ----------------------------------------------------------------------------------
@@ -1141,8 +1300,17 @@
       navShoppingList.addEventListener('click', () => showPage('shopping-list-page'));
       navSettings.addEventListener('click', () => {
         showPage('settings-page');
+        showSettingsTab('settings-content-logs'); // Define a aba de Logs como padrão
       });
 
+      // Event listeners para a sub-navegação de configurações
+      settingsNavLogs.addEventListener('click', () => showSettingsTab('settings-content-logs'));
+      settingsNavApi.addEventListener('click', () => showSettingsTab('settings-content-api'));
+      settingsNavTheme.addEventListener('click', () => showSettingsTab('settings-content-theme'));
+      
+      // Event listener para o botão de salvar a chave API
+      saveApiKeyBtn.addEventListener('click', saveApiKey);
+      
       // Lógica de segurança: para a câmera quando a página não está ativa
       document.addEventListener('visibilitychange', () => {
         if (document.hidden && isCameraActive) {
