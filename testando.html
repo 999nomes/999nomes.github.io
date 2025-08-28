@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-  <!-- Ícones Heroicons -->
+  <!-- Bibliotecas de terceiros -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
@@ -26,6 +26,23 @@
     .table-container {
       overflow-x: auto;
     }
+    /* Estilo para o contêiner de vídeo */
+    #camera-container {
+      position: relative;
+      width: 100%;
+      padding-top: 75%; /* Proporção 4:3 */
+      overflow: hidden;
+      border-radius: 0.75rem; /* rounded-xl */
+      box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    }
+    #camera-video {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
   </style>
 </head>
 <body class="bg-gray-900 text-white min-h-screen flex flex-col">
@@ -36,6 +53,7 @@
     <div class="flex justify-center space-x-4">
       <button id="nav-calculator" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Calculadora</button>
       <button id="nav-shopping-list" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Lista de Compras</button>
+      <button id="nav-camera" class="py-2 px-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors">Câmera</button>
     </div>
   </nav>
 
@@ -116,41 +134,66 @@
         </div>
       </div>
     </div>
+
+    <!-- Nova Página de Câmera -->
+    <div id="camera-page" class="page-content hidden flex flex-col items-center gap-6">
+      <h1 class="text-2xl font-bold text-center sm:text-3xl">Identificação por Câmera</h1>
+      <p class="text-center text-gray-400 max-w-2xl mx-auto">Use a câmera traseira do seu dispositivo para capturar uma imagem. A câmera só será ativada com sua permissão.</p>
+
+      <div id="camera-container" class="w-full sm:max-w-xl">
+        <video id="camera-video" class="rounded-xl shadow-lg bg-gray-800" playsinline autoplay></video>
+        <canvas id="camera-canvas" class="hidden"></canvas>
+      </div>
+
+      <div class="flex flex-col sm:flex-row justify-center gap-4 mt-4 w-full sm:max-w-xl">
+        <button id="start-camera-btn" class="py-3 px-6 rounded-full bg-green-500 hover:bg-green-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto">Ativar Câmera</button>
+        <button id="capture-image-btn" class="py-3 px-6 rounded-full bg-purple-500 hover:bg-purple-600 transition-colors shadow-md text-sm sm:text-base font-semibold w-full sm:w-auto hidden">Capturar Imagem</button>
+      </div>
+
+      <div id="captured-image-container" class="mt-8 hidden w-full sm:max-w-xl flex flex-col gap-4 items-center">
+        <h2 class="text-xl font-bold">Imagem Capturada:</h2>
+        <img id="captured-image" class="rounded-lg shadow-lg" alt="Imagem Capturada" />
+        <button id="clear-image-btn" class="py-2 px-4 rounded-full bg-red-500 hover:bg-red-600 transition-colors shadow-md text-sm sm:text-base font-semibold">Limpar Imagem</button>
+      </div>
+    </div>
+
+    <!-- Modal de API Key -->
+    <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
+        <h2 class="text-xl font-bold mb-4 text-center">API Key do Gemini</h2>
+        <p class="text-sm text-center mb-4 text-gray-400">Para usar a IA, você precisa da sua API Key.</p>
+        <input type="text" id="modal-api-key-input" placeholder="Cole sua API Key aqui" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+        <div class="flex justify-end gap-2">
+          <button id="modal-cancel-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
+          <button id="modal-continue-button" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">Continuar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Instruções -->
+    <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
+      <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
+        <h2 class="text-xl font-bold mb-4 text-center">Como obter sua API Key do Gemini</h2>
+        <ol class="list-decimal ml-5 space-y-2 text-sm text-gray-300">
+          <li>Acesse <a href="https://aistudio.google.com" target="_blank" class="text-blue-400 underline hover:text-blue-300 transition-colors">aistudio.google.com</a></li>
+          <li>Faça login com sua conta Google.</li>
+          <li>No menu lateral, clique em <b>Get API Key</b>.</li>
+          <li>Clique em <b>Create API key in new project</b>.</li>
+          <li>Copie a chave gerada e cole no campo acima.</li>
+        </ol>
+        <div class="flex justify-end mt-6">
+          <button id="closeInstructions" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Fechar</button>
+        </div>
+      </div>
+    </div>
   </main>
-
-  <!-- Modal de API Key -->
-  <div id="api-key-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
-    <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
-      <h2 class="text-xl font-bold mb-4 text-center">API Key do Gemini</h2>
-      <p class="text-sm text-center mb-4 text-gray-400">Para usar a IA, você precisa da sua API Key.</p>
-      <input type="text" id="modal-api-key-input" placeholder="Cole sua API Key aqui" class="w-full bg-gray-700 text-white placeholder-gray-400 border border-gray-600 rounded-lg p-3 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <div class="flex justify-end gap-2">
-        <button id="modal-cancel-button" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Cancelar</button>
-        <button id="modal-continue-button" class="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition-colors">Continuar</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal de Instruções -->
-  <div id="instructions-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden flex items-center justify-center z-50">
-    <div class="bg-gray-800 text-white p-8 rounded-xl w-11/12 sm:w-96 shadow-2xl relative">
-      <h2 class="text-xl font-bold mb-4 text-center">Como obter sua API Key do Gemini</h2>
-      <ol class="list-decimal ml-5 space-y-2 text-sm text-gray-300">
-        <li>Acesse <a href="https://aistudio.google.com" target="_blank" class="text-blue-400 underline hover:text-blue-300 transition-colors">aistudio.google.com</a></li>
-        <li>Faça login com sua conta Google.</li>
-        <li>No menu lateral, clique em <b>Get API Key</b>.</li>
-        <li>Clique em <b>Create API key in new project</b>.</li>
-        <li>Copie a chave gerada e cole no campo acima.</li>
-      </ol>
-      <div class="flex justify-end mt-6">
-        <button id="closeInstructions" class="bg-gray-600 hover:bg-gray-700 px-4 py-2 rounded-lg transition-colors">Fechar</button>
-      </div>
-    </div>
-  </div>
 
   <script>
     // Referência global para o objeto jsPDF
     let jsPDF;
+    // Variável global para armazenar o stream da câmera
+    let cameraStream = null;
+
     // Função para carregar dinamicamente o jsPDF
     async function loadJsPDF() {
       if (typeof window.jspdf === 'undefined') {
@@ -192,10 +235,21 @@
       const instructionsModal = document.getElementById("instructions-modal");
       const closeInstructions = document.getElementById("closeInstructions");
 
+      const cameraPage = document.getElementById("camera-page");
+      const cameraVideo = document.getElementById("camera-video");
+      const cameraCanvas = document.getElementById("camera-canvas");
+      const startCameraBtn = document.getElementById("start-camera-btn");
+      const captureImageBtn = document.getElementById("capture-image-btn");
+      const capturedImage = document.getElementById("captured-image");
+      const capturedImageContainer = document.getElementById("captured-image-container");
+      const clearImageBtn = document.getElementById("clear-image-btn");
+
       const navCalculator = document.getElementById('nav-calculator');
       const navShoppingList = document.getElementById('nav-shopping-list');
+      const navCamera = document.getElementById('nav-camera');
       const messageBox = document.getElementById('message-box');
       let geminiApiKey = "";
+      let isCameraActive = false;
 
       // ----------------------------------------------------------------------------------
       // Funções de Utilidade
@@ -556,6 +610,75 @@
           showMessage("Erro ao salvar PDF. Tente novamente.", 'error');
         });
       }
+      
+      // ----------------------------------------------------------------------------------
+      // Lógica da Câmera
+      // ----------------------------------------------------------------------------------
+      
+      /**
+       * Inicia o stream da câmera traseira.
+       */
+      async function startCamera() {
+        if (!isCameraActive) {
+          try {
+            // Solicita acesso à câmera traseira do dispositivo
+            const constraints = { video: { facingMode: 'environment' } };
+            cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+            cameraVideo.srcObject = cameraStream;
+            isCameraActive = true;
+            captureImageBtn.classList.remove('hidden');
+            startCameraBtn.classList.add('hidden');
+            showMessage("Câmera ativada. Pode capturar a imagem.", "success");
+          } catch (err) {
+            console.error('Erro ao acessar a câmera:', err);
+            showMessage("Acesso à câmera negado ou indisponível.", "error");
+            isCameraActive = false;
+          }
+        }
+      }
+
+      /**
+       * Para o stream da câmera.
+       */
+      function stopCamera() {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraVideo.srcObject = null;
+          isCameraActive = false;
+          captureImageBtn.classList.add('hidden');
+          startCameraBtn.classList.remove('hidden');
+        }
+      }
+
+      /**
+       * Captura uma imagem do stream de vídeo e a exibe.
+       */
+      function captureImage() {
+        if (!isCameraActive) {
+          showMessage("A câmera não está ativa.", "error");
+          return;
+        }
+
+        // Configura o canvas para a mesma resolução do vídeo
+        cameraCanvas.width = cameraVideo.videoWidth;
+        cameraCanvas.height = cameraVideo.videoHeight;
+        const context = cameraCanvas.getContext('2d');
+        
+        // Desenha o frame atual do vídeo no canvas
+        context.drawImage(cameraVideo, 0, 0, cameraCanvas.width, cameraCanvas.height);
+        
+        // Converte a imagem do canvas para uma URL base64 e exibe
+        const imageDataUrl = cameraCanvas.toDataURL('image/png');
+        capturedImage.src = imageDataUrl;
+        capturedImageContainer.classList.remove('hidden');
+        
+        // Para a câmera para economizar bateria
+        stopCamera();
+        
+        showMessage("Imagem capturada com sucesso!", "success");
+        // Loga a URL da imagem no console para teste
+        console.log("Imagem capturada (Base64):", imageDataUrl.substring(0, 50) + "...");
+      }
 
       // ----------------------------------------------------------------------------------
       // Lógica dos Modais e Event Listeners
@@ -576,6 +699,15 @@
         }
       });
 
+      // Event Listeners da Câmera
+      startCameraBtn.addEventListener('click', startCamera);
+      captureImageBtn.addEventListener('click', captureImage);
+      clearImageBtn.addEventListener('click', () => {
+        capturedImageContainer.classList.add('hidden');
+        capturedImage.src = "";
+        showMessage("Imagem limpa.", "info");
+      });
+      
       // Event Listeners dos Modais
       modalContinueButton.addEventListener('click', () => {
         geminiApiKey = modalApiKeyInput.value.trim();
@@ -602,18 +734,40 @@
       closeInstructions.addEventListener("click", () => {
         instructionsModal.classList.add("hidden");
       });
+      
+      // ----------------------------------------------------------------------------------
+      // Navegação e Lógica de Segurança
+      // ----------------------------------------------------------------------------------
 
-      // ----------------------------------------------------------------------------------
-      // Navegação
-      // ----------------------------------------------------------------------------------
+      // Gerencia qual página está visível
       function showPage(pageId) {
         document.querySelectorAll('.page-content').forEach(page => page.classList.add('hidden'));
         document.getElementById(pageId).classList.remove('hidden');
+        
+        // Lógica de segurança: para a câmera se a página for trocada
+        if (pageId !== 'camera-page') {
+          stopCamera();
+        }
       }
 
+      // Event listeners para os botões de navegação
       navCalculator.addEventListener('click', () => showPage('calculator-page'));
       navShoppingList.addEventListener('click', () => showPage('shopping-list-page'));
+      navCamera.addEventListener('click', () => showPage('camera-page'));
 
+      // Lógica de segurança: para a câmera quando a página não está ativa
+      document.addEventListener('visibilitychange', () => {
+        const onCameraPage = !cameraPage.classList.contains('hidden');
+        if (document.hidden && isCameraActive) {
+          stopCamera();
+          showMessage("Câmera desativada por segurança (página em segundo plano).", "info");
+        } else if (!document.hidden && onCameraPage) {
+          // Opcional: Reativar a câmera automaticamente ou com um aviso
+          // startCamera(); // Esta linha poderia ser re-habilitada para reativar automaticamente
+          showMessage("Câmera pode ser reativada. Clique no botão Iniciar.", "info");
+        }
+      });
+      
       // ----------------------------------------------------------------------------------
       // Inicialização
       // ----------------------------------------------------------------------------------
