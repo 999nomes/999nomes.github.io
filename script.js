@@ -1,335 +1,466 @@
-:root {
-    --primary: #4F46E5;
-    --primary-hover: #4338CA;
-    --bg-color: #F3F4F6;
-    --card-bg: #FFFFFF;
-    --text-main: #111827;
-    --text-muted: #6B7280;
-    --danger: #EF4444;
-    --danger-hover: #DC2626;
-    --success: #10B981;
-    --warning: #F59E0B;
-    --border-color: #E5E7EB;
-    --input-bg: #FFFFFF;
-    --input-border: #D1D5DB;
-    --section-bg: #F9FAFB;
-    --header-bg: linear-gradient(135deg, var(--primary), #818CF8);
-    --footer-bg: rgba(255, 255, 255, 0.95);
-    --budget-input-bg: rgba(255, 255, 255, 0.95);
-    --budget-input-color: #111827;
-    --delete-bg: #FEE2E2;
-    --border-radius: 20px;
-    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-    --transition: all 0.2s ease;
-}
+document.addEventListener('DOMContentLoaded', () => {
+    // === DOM Elements ===
+    const itemForm = document.getElementById('item-form');
+    const itemNameInput = document.getElementById('item-name');
+    const itemPriceInput = document.getElementById('item-price');
+    const itemQtdInput = document.getElementById('item-qtd');
+    const itemsList = document.getElementById('items-list');
+    const totalPriceEl = document.getElementById('total-price');
+    const totalItemsEl = document.getElementById('total-items');
+    const budgetInput = document.getElementById('budget');
+    const budgetProgress = document.getElementById('budget-progress');
+    
+    // Group Mode
+    const groupModeToggle = document.getElementById('group-mode-toggle');
+    const globalDivisorContainer = document.getElementById('global-divisor-container');
+    const globalDivisorInput = document.getElementById('global-divisor');
+    const myShareContainer = document.getElementById('my-share-container');
+    const mySharePriceEl = document.getElementById('my-share-price');
+    
+    // PDF
+    const pdfBtn = document.getElementById('pdf-btn');
+    
+    // Tema, Abas e Rodapé
+    const themeToggleBtn = document.getElementById('theme-toggle');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+    const appFooter = document.getElementById('app-footer');
+    const budgetSection = document.getElementById('header-budget-section');
 
-[data-theme="dark"] {
-    --primary: #6366F1;
-    --primary-hover: #4F46E5;
-    --bg-color: #030712;
-    --card-bg: #111827;
-    --text-main: #F9FAFB;
-    --text-muted: #9CA3AF;
-    --danger: #F87171;
-    --danger-hover: #EF4444;
-    --success: #34D399;
-    --warning: #FBBF24;
-    --border-color: #374151;
-    --input-bg: #1F2937;
-    --input-border: #4B5563;
-    --section-bg: #030712;
-    --header-bg: linear-gradient(135deg, #312E81, #4338CA);
-    --footer-bg: rgba(17, 24, 39, 0.95);
-    --budget-input-bg: rgba(0, 0, 0, 0.2);
-    --budget-input-color: #F9FAFB;
-    --delete-bg: #374151;
-}
+    // Histórico
+    const finishBtn = document.getElementById('finish-btn');
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+    // IA
+    const aiConnectBtn = document.getElementById('ai-connect-btn');
+    const aiGenerateBtn = document.getElementById('ai-generate-btn');
+    const aiHelpBtn = document.getElementById('ai-help-btn');
+    const aiHelpContent = document.getElementById('ai-help-content');
+    const aiModal = document.getElementById('ai-modal');
+    const closeAiModalBtn = document.getElementById('close-ai-modal');
+    const saveAiKeyBtn = document.getElementById('save-ai-key');
+    const aiKeyInput = document.getElementById('ai-key-input');
+    const recipesListEl = document.getElementById('recipes-list');
+    const aiStatus = document.getElementById('ai-status');
 
-body {
-    font-family: 'Inter', sans-serif;
-    background-color: var(--bg-color);
-    color: var(--text-main);
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    min-height: 100vh;
-    padding: 20px;
-    transition: background-color 0.3s ease, color 0.3s ease;
-}
+    // === ESTADO DA APLICAÇÃO ===
+    let items = JSON.parse(localStorage.getItem('market_items')) || [];
+    let savedBudget = localStorage.getItem('market_budget') || '';
+    let purchaseHistory = JSON.parse(localStorage.getItem('purchase_history')) || [];
+    let isGroupMode = localStorage.getItem('market_group_mode') === 'true';
+    let globalDivisor = parseInt(localStorage.getItem('market_global_divisor')) || 1;
+    
+    if(savedBudget) budgetInput.value = savedBudget;
 
-.app-container {
-    background-color: var(--card-bg);
-    width: 100%;
-    max-width: 420px;
-    min-height: 90vh;
-    border-radius: var(--border-radius);
-    box-shadow: var(--shadow);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    position: relative;
-    padding-bottom: 80px; 
-    transition: background-color 0.3s ease;
-}
+    // === INICIALIZAÇÃO MODO GRUPO ===
+    groupModeToggle.checked = isGroupMode;
+    globalDivisorInput.value = globalDivisor;
+    if (isGroupMode) globalDivisorContainer.style.display = 'flex';
+    
+    groupModeToggle.addEventListener('change', (e) => {
+        isGroupMode = e.target.checked;
+        localStorage.setItem('market_group_mode', isGroupMode);
+        globalDivisorContainer.style.display = isGroupMode ? 'flex' : 'none';
+        updateUI();
+    });
+    
+    globalDivisorInput.addEventListener('input', (e) => {
+        let val = parseInt(e.target.value);
+        if (isNaN(val) || val < 1) val = 1;
+        globalDivisor = val;
+        localStorage.setItem('market_global_divisor', globalDivisor);
+        updateUI();
+    });
+    
+    window.updateItemDivisor = (id, value) => {
+        let val = parseInt(value);
+        if (isNaN(val) || val < 1) val = 1;
+        const index = items.findIndex(item => item.id === id);
+        if (index !== -1) {
+            items[index].customDivisor = val;
+            updateUI();
+        }
+    };
 
-header {
-    background: var(--header-bg);
-    color: white;
-    padding: 24px;
-    border-bottom-left-radius: 24px;
-    border-bottom-right-radius: 24px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-}
+    // === GERENCIAMENTO DE TEMA ===
+    const iconMoon = themeToggleBtn.querySelector('.icon-moon');
+    const iconSun = themeToggleBtn.querySelector('.icon-sun');
+    const savedTheme = localStorage.getItem('theme') || 'light';
+    if (savedTheme === 'dark') {
+        document.documentElement.setAttribute('data-theme', 'dark');
+        iconMoon.style.display = 'none';
+        iconSun.style.display = 'block';
+    }
 
-.header-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-}
+    themeToggleBtn.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'light' : 'dark');
+        localStorage.setItem('theme', isDark ? 'light' : 'dark');
+        iconMoon.style.display = isDark ? 'block' : 'none';
+        iconSun.style.display = isDark ? 'none' : 'block';
+    });
 
-.header-top h1 {
-    font-size: 1.4rem;
-    font-weight: 700;
-}
+    // === GERENCIAMENTO DE ABAS ===
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const targetId = btn.getAttribute('data-target');
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            tabContents.forEach(c => c.classList.remove('active'));
+            document.getElementById(targetId).classList.add('active');
+            
+            if (targetId === 'tab-recipes') {
+                appFooter.style.display = 'none';
+                budgetSection.style.display = 'none';
+            } else {
+                appFooter.style.display = 'block';
+                budgetSection.style.display = 'block';
+            }
+        });
+    });
 
-.header-actions {
-    display: flex;
-    gap: 8px;
-}
+    // === HELPERS DE FORMATAÇÃO ===
+    const formatCurrency = (value) => value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    const normalizeString = (str) => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 
-.action-btn {
-    background: rgba(255, 255, 255, 0.2);
-    border: none;
-    border-radius: 10px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    font-weight: 600;
-    transition: var(--transition);
-    color: white;
-    padding: 0 12px;
-}
-.action-btn.theme-toggle {
-    width: 40px;
-    padding: 0;
-    border-radius: 50%;
-    font-size: 1.2rem;
-}
-.action-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    transform: scale(1.05);
-}
+    // === FUNÇÕES DE HISTÓRICO ===
+    const getHistoricalPriceInfo = (productName, currentPrice) => {
+        if (!purchaseHistory.length) return null;
+        
+        const normalizedName = normalizeString(productName);
+        let lastPrice = null;
+        let lastDate = null;
 
-.tabs-nav {
-    display: flex;
-    background: rgba(255, 255, 255, 0.2);
-    border-radius: 12px;
-    padding: 4px;
-    margin-bottom: 16px;
-}
+        // Procura no histórico, do mais recente para o mais antigo
+        for (let i = purchaseHistory.length - 1; i >= 0; i--) {
+            const histList = purchaseHistory[i].items;
+            const itemMatch = histList.find(hi => normalizeString(hi.name) === normalizedName);
+            if (itemMatch) {
+                lastPrice = itemMatch.price;
+                lastDate = new Date(purchaseHistory[i].date).toLocaleDateString('pt-BR');
+                break;
+            }
+        }
 
-.tab-btn {
-    flex: 1;
-    background: transparent;
-    color: white;
-    border: none;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 0.95rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: var(--transition);
-    opacity: 0.8;
-}
+        if (!lastPrice || lastPrice === currentPrice) return null;
 
-.tab-btn.active {
-    background: white;
-    color: var(--primary);
-    opacity: 1;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
+        const diff = currentPrice - lastPrice;
+        if (diff > 0) {
+            return { class: 'expensive', text: `📈 +${formatCurrency(diff)} desde ${lastDate}` };
+        } else {
+            return { class: 'cheaper', text: `📉 ${formatCurrency(diff)} desde ${lastDate}` }; // diff já é negativo
+        }
+    };
 
-[data-theme="dark"] .tab-btn.active {
-    background: var(--card-bg);
-    color: var(--primary);
-}
+    finishBtn.addEventListener('click', () => {
+        if (items.length === 0) {
+            alert('Adicione itens ao carrinho antes de salvar.');
+            return;
+        }
+        if(confirm('Isso salvará os preços atuais no Histórico e limpará o carrinho. Confirmar?')) {
+            purchaseHistory.push({ date: new Date().toISOString(), items: [...items] });
+            localStorage.setItem('purchase_history', JSON.stringify(purchaseHistory));
+            items = [];
+            updateUI();
+            alert('Compra salva no histórico com sucesso!');
+        }
+    });
 
-.views-container {
-    flex: 1;
-    overflow-y: auto;
-}
+    // === INTERFACE DO CARRINHO ===
+    const updateBudgetStatus = (amountToCompare) => {
+        const budget = parseFloat(budgetInput.value);
+        const targetEl = isGroupMode ? mySharePriceEl : totalPriceEl;
+        
+        totalPriceEl.classList.remove('over-budget');
+        mySharePriceEl.classList.remove('over-budget');
 
-.tab-content {
-    display: none;
-    width: 100%;
-}
+        if (isNaN(budget) || budget <= 0) {
+            budgetProgress.style.width = '0%';
+            return;
+        }
+        const percentage = Math.min((amountToCompare / budget) * 100, 100);
+        budgetProgress.style.width = `${percentage}%`;
 
-.tab-content.active {
-    display: block;
-    animation: fadeIn 0.3s ease;
-}
+        if (amountToCompare > budget) {
+            budgetProgress.style.backgroundColor = 'var(--danger)';
+            targetEl.classList.add('over-budget');
+        } else if (amountToCompare > budget * 0.8) {
+            budgetProgress.style.backgroundColor = 'var(--warning)';
+        } else {
+            budgetProgress.style.backgroundColor = 'var(--success)';
+        }
+    };
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(5px); }
-    to { opacity: 1; transform: translateY(0); }
-}
+    const updateUI = () => {
+        itemsList.innerHTML = '';
+        let totalAmount = 0;
+        let myShareAmount = 0;
+        let totalQtd = 0;
 
-/* Rest of structure... */
-.budget-section label { font-size: 0.875rem; font-weight: 500; opacity: 0.9; }
-.budget-section input[type="number"] {
-    width: 100%; padding: 12px; border: none; border-radius: 12px; margin-top: 8px;
-    font-size: 1rem; font-weight: 600; color: var(--budget-input-color);
-    background: var(--budget-input-bg); transition: var(--transition);
-}
-.budget-section input[type="number"]:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.4); }
+        items.forEach(item => {
+            const itemTotal = item.price * item.quantity;
+            totalAmount += itemTotal;
+            totalQtd += Number.isInteger(item.quantity) ? item.quantity : 1;
+            
+            const currentDivisor = item.customDivisor || globalDivisor;
+            const itemShare = itemTotal / currentDivisor;
+            myShareAmount += itemShare;
 
-.budget-group-container { display: flex; flex-direction: column; gap: 4px; }
-.budget-wrapper, .group-mode-wrapper { display: flex; flex-direction: column; }
-.group-mode-wrapper { background: rgba(255, 255, 255, 0.15); padding: 10px 14px; border-radius: 12px; margin-top: 8px; }
-.group-toggle-label { display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; margin-bottom: 0; color: white; }
-.group-toggle-label input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); cursor: pointer; }
-#global-divisor-container { margin-top: 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }
-#global-divisor-container label { font-size: 0.85rem; font-weight: 600; }
-#global-divisor-container input[type="number"] { width: 70px; padding: 8px; margin-top: 0; text-align: center; border-radius: 8px; }
-.progress-bar-container { height: 6px; background: rgba(255, 255, 255, 0.3); border-radius: 4px; margin-top: 12px; overflow: hidden; }
-.progress-bar { height: 100%; width: 0%; background-color: var(--success); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease; }
+            const li = document.createElement('li');
+            li.className = 'list-item';
+            
+            const displayQtd = Number.isInteger(item.quantity) ? item.quantity : item.quantity.toFixed(3).replace(/\.?0+$/, '');
+            
+            // Lógica de badge de histórico
+            const histInfo = getHistoricalPriceInfo(item.name, item.price);
+            const badgeHTML = histInfo ? `<span class="price-badge ${histInfo.class}">${histInfo.text}</span>` : '';
 
-#tab-calculator { padding: 0 20px; }
-#tab-recipes { padding: 0 20px 20px 20px; }
+            let divisorHTML = '';
+            let shareInfoHTML = '';
+            
+            if (isGroupMode) {
+                divisorHTML = `
+                    <div class="item-divisor-wrapper">
+                        <label>Dividir por:</label>
+                        <input type="number" min="1" step="1" value="${currentDivisor}" onchange="updateItemDivisor('${item.id}', this.value)">
+                    </div>
+                `;
+                shareInfoHTML = `<span class="item-total-share">Sua parte: ${formatCurrency(itemShare)}</span>`;
+            }
 
-.add-item-section {
-    background: var(--section-bg); padding: 16px; border-radius: 16px; margin-bottom: 24px;
-    border: 1px solid var(--border-color); transition: background-color 0.3s ease, border-color 0.3s ease;
-}
+            li.innerHTML = `
+                <div class="item-info">
+                    <div class="item-name">${item.name}</div>
+                    <div class="item-details">${displayQtd}x ${formatCurrency(item.price)} ${badgeHTML}</div>
+                    ${divisorHTML}
+                </div>
+                <div style="text-align: right;">
+                    <div class="item-total">${formatCurrency(itemTotal)}</div>
+                    ${shareInfoHTML}
+                </div>
+                <button class="btn-delete" onclick="removeItem('${item.id}')" aria-label="Remover">
+                    <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                </button>
+            `;
+            itemsList.appendChild(li);
+        });
 
-.label-with-action {
-    display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;
-}
+        totalPriceEl.textContent = formatCurrency(totalAmount);
+        totalItemsEl.textContent = totalQtd;
+        
+        if (isGroupMode) {
+            myShareContainer.style.display = 'flex';
+            mySharePriceEl.textContent = formatCurrency(myShareAmount);
+            updateBudgetStatus(myShareAmount);
+        } else {
+            myShareContainer.style.display = 'none';
+            updateBudgetStatus(totalAmount);
+        }
+        
+        localStorage.setItem('market_items', JSON.stringify(items));
+    };
 
-.scan-btn {
-    background: none; border: 1px solid var(--primary); color: var(--primary);
-    border-radius: 6px; padding: 4px 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: var(--transition);
-}
-.scan-btn:hover { background: var(--primary); color: white; }
-.scan-btn.cancel-scan { border-color: var(--danger); color: var(--danger); margin-top: 10px; width: 100%; padding: 8px; }
+    itemForm.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const name = itemNameInput.value.trim();
+        const price = parseFloat(itemPriceInput.value);
+        const quantity = parseFloat(itemQtdInput.value);
 
-#reader-container { margin-bottom: 10px; padding: 10px; background: white; border-radius: 10px; border: 1px solid var(--border-color); }
-#reader { width: 100%; border-radius: 8px; overflow: hidden; }
+        if (name && !isNaN(price) && !isNaN(quantity) && quantity > 0) {
+            items.push({ id: Date.now().toString(), name, price, quantity });
+            updateUI();
+            itemNameInput.value = ''; itemPriceInput.value = ''; itemQtdInput.value = '1';
+            itemNameInput.focus();
+        }
+    });
 
-.form-row { display: flex; gap: 12px; margin-bottom: 12px; align-items: flex-end; }
-.form-row:last-child { margin-bottom: 0; }
-.form-group { display: flex; flex-direction: column; min-width: 0; }
-.flex-1 { flex: 1; } .flex-2 { flex: 2; width: 100%; }
-.form-group label { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.05em; }
-.form-group input { width: 100%; padding: 12px; border: 1px solid var(--input-border); border-radius: 10px; font-size: 1rem; transition: var(--transition); background: var(--input-bg); color: var(--text-main); }
-.form-group input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15); }
-.btn-add { background-color: var(--primary); color: white; border: none; border-radius: 10px; width: 46px; height: 46px; font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: var(--transition); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(79, 70, 229, 0.3); }
-.btn-add:hover { background-color: var(--primary-hover); transform: translateY(-2px); box-shadow: 0 4px 6px rgba(79, 70, 229, 0.4); }
-.btn-add:active { transform: translateY(0); }
+    window.removeItem = (id) => {
+        items = items.filter(item => item.id !== id);
+        updateUI();
+    };
 
-.items-list-section { padding-bottom: 20px; }
-#items-list { list-style: none; }
-.list-item { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 14px; margin-bottom: 12px; transition: var(--transition); animation: slideIn 0.3s ease forwards; position: relative; }
-@keyframes slideIn { from { opacity: 0; transform: translateY(15px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-.item-info { flex: 1; }
-.item-name { font-weight: 600; font-size: 1.05rem; margin-bottom: 4px; color: var(--text-main); }
-.item-details { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 8px; }
-.price-badge { font-size: 0.75rem; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
-.price-badge.cheaper { background: rgba(16, 185, 129, 0.1); color: var(--success); }
-.price-badge.expensive { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
-.price-badge.equal { background: rgba(107, 114, 128, 0.1); color: var(--text-muted); }
-.item-total { font-weight: 700; font-size: 1.15rem; margin-right: 16px; color: var(--text-main); text-align: right; }
-.item-total-share { display: block; font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 2px; }
-.btn-delete { background: var(--delete-bg); border: none; color: var(--danger); cursor: pointer; padding: 10px; border-radius: 10px; transition: var(--transition); display: flex; align-items: center; justify-content: center; }
-.btn-delete:hover { color: white; background-color: var(--danger); }
+    budgetInput.addEventListener('input', () => {
+        updateUI();
+        localStorage.setItem('market_budget', budgetInput.value);
+    });
+    
+    // === GERAÇÃO DE PDF ===
+    if(pdfBtn) {
+        pdfBtn.addEventListener('click', () => {
+            if (items.length === 0) {
+                alert('O carrinho está vazio.');
+                return;
+            }
 
-/* Item Divisor (Group Mode) */
-.item-divisor-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 8px; background: var(--bg-color); padding: 4px 8px; border-radius: 8px; width: fit-content; border: 1px solid var(--border-color); }
-.item-divisor-wrapper label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin: 0; text-transform: none; }
-.item-divisor-wrapper input { width: 50px; padding: 4px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; text-align: center; margin: 0; }
-.item-divisor-wrapper input:focus { outline: none; border-color: var(--primary); }
+            const dateStr = new Date().toLocaleDateString('pt-BR', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
 
-footer { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--footer-bg); backdrop-filter: blur(10px); padding: 20px 24px; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 10px -1px rgba(0, 0, 0, 0.05); transition: background-color 0.3s ease, border-color 0.3s ease; }
-.summary { display: flex; justify-content: space-between; align-items: center; }
-.summary-item { color: var(--text-muted); font-size: 1rem; }
-.summary-item strong { color: var(--text-main); font-size: 1.1rem; margin-left: 4px; }
-.summary-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
-.summary-total { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
-.summary-total span:first-child { font-weight: 600; color: var(--text-muted); text-align: right; }
-.summary-total span:last-child { font-size: 1.5rem; font-weight: 800; color: var(--text-main); transition: color 0.3s ease; text-align: right; min-width: 100px; }
-#my-share-container span:last-child { color: var(--primary); font-size: 1.75rem; }
-.summary-total span:last-child.over-budget { color: var(--danger) !important; }
+            let rows = '';
+            let totalAmount = 0;
+            let myShareAmount = 0;
 
-/* IA / Recipes */
-.recipes-header { margin-bottom: 24px; text-align: center; }
-.recipes-header h2 { font-size: 1.25rem; color: var(--text-main); margin-bottom: 4px; }
-.recipes-header p { color: var(--text-muted); font-size: 0.9rem; }
-.ai-connect-section { margin-bottom: 20px; text-align: center; }
-.ai-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); transition: var(--transition); }
-.ai-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(16, 185, 129, 0.4); }
-.ai-btn-outline { width: 100%; padding: 12px; margin-top: 10px; background: transparent; color: var(--primary); border: 1px solid var(--primary); border-radius: 12px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); }
-.ai-btn-outline:hover { background: rgba(79, 70, 229, 0.1); }
-.ai-help-content { background: var(--section-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-top: 10px; text-align: left; font-size: 0.85rem; color: var(--text-main); line-height: 1.5; }
-.ai-help-content ol { padding-left: 20px; margin-bottom: 12px; }
-.ai-help-content li { margin-bottom: 8px; }
-.ai-help-content a { color: var(--primary); font-weight: 600; text-decoration: none; }
-.ai-help-content a:hover { text-decoration: underline; }
-.ai-help-content code { background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
-[data-theme="dark"] .ai-help-content code { background: rgba(255,255,255,0.1); }
-.obs-text { color: var(--danger); font-weight: 700; margin-top: 10px; }
-.ai-btn.generate { background: linear-gradient(135deg, #8B5CF6, #6D28D9); box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3); margin-top: 10px; }
-.ai-status { margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); }
+            items.forEach(item => {
+                const itemTotal = item.price * item.quantity;
+                totalAmount += itemTotal;
+                
+                const currentDivisor = item.customDivisor || globalDivisor;
+                const itemShare = itemTotal / currentDivisor;
+                myShareAmount += itemShare;
 
-.recipe-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); white-space: pre-line; color: var(--text-main); line-height: 1.5; }
-.recipe-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
-.recipe-title { font-weight: 700; font-size: 1.1rem; color: var(--text-main); }
+                const displayQtd = Number.isInteger(item.quantity) ? item.quantity : item.quantity.toFixed(3).replace(/\.?0+$/, '');
+                
+                let divisorText = isGroupMode ? `<td>÷ ${currentDivisor}</td><td class="number">${formatCurrency(itemShare)}</td>` : '';
 
-/* Modal */
-.modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 1000; display: flex; align-items: center; justify-content: center; }
-.modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
-.modal-content { position: relative; background: var(--card-bg); width: 90%; max-width: 400px; padding: 24px; border-radius: 20px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid var(--border-color); }
-.modal-content h3 { font-size: 1.25rem; margin-bottom: 12px; color: var(--text-main); }
-.modal-content p { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px; line-height: 1.5; }
-.modal-content input { width: 100%; padding: 12px; border: 1px solid var(--input-border); border-radius: 10px; margin-bottom: 20px; background: var(--input-bg); color: var(--text-main); font-size: 1rem; }
-.modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
-.btn-primary { padding: 10px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
-.btn-cancel { padding: 10px 16px; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600; cursor: pointer; }
+                rows += `
+                    <tr>
+                        <td>${item.name}</td>
+                        <td class="number">${displayQtd}</td>
+                        <td class="number">${formatCurrency(item.price)}</td>
+                        <td class="number">${formatCurrency(itemTotal)}</td>
+                        ${divisorText}
+                    </tr>
+                `;
+            });
+            
+            const groupHeaders = isGroupMode ? `<th>Divisão</th><th class="number">Sua Parte</th>` : '';
+            const groupTotals = isGroupMode ? `<p>Total Geral: ${formatCurrency(totalAmount)}</p><p class="highlight">Sua Parte: ${formatCurrency(myShareAmount)}</p>` : `<p class="highlight">Total: ${formatCurrency(totalAmount)}</p>`;
 
-/* PDF Export styles */
-.pdf-export-container { padding: 20px; font-family: 'Inter', sans-serif; background: white; color: black; }
-.pdf-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px; }
-.pdf-header h1 { font-size: 1.5rem; color: #111827; }
-.pdf-header p { color: #6B7280; font-size: 0.9rem; }
-.pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-.pdf-table th, .pdf-table td { border-bottom: 1px solid #E5E7EB; padding: 10px 8px; text-align: left; font-size: 0.9rem; }
-.pdf-table th { font-weight: 700; color: #374151; background-color: #F9FAFB; }
-.pdf-table td.number { text-align: right; }
-.pdf-totals { width: 100%; margin-top: 20px; text-align: right; font-size: 1rem; }
-.pdf-totals p { margin: 6px 0; }
-.pdf-totals .highlight { font-size: 1.25rem; font-weight: bold; color: #4F46E5; }
+            const htmlContent = `
+                <div class="pdf-export-container">
+                    <div class="pdf-header">
+                        <h1>🛒 Calc Mercado</h1>
+                        <p>Comprovante de Compra - ${dateStr}</p>
+                    </div>
+                    <table class="pdf-table">
+                        <thead>
+                            <tr>
+                                <th>Produto</th>
+                                <th class="number">Qtd</th>
+                                <th class="number">Preço Un.</th>
+                                <th class="number">Subtotal</th>
+                                ${groupHeaders}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                    <div class="pdf-totals">
+                        ${groupTotals}
+                    </div>
+                </div>
+            `;
 
-/* Responsive */
-@media (min-width: 768px) {
-    body { padding: 40px; align-items: center; }
-    .app-container { max-width: 900px; min-height: auto; padding-bottom: 0; }
-    header { border-radius: 24px 24px 0 0; margin-bottom: 0; }
-    .views-container { width: 100%; }
-    #tab-calculator.active { display: flex; gap: 24px; padding: 24px; align-items: flex-start; }
-    #tab-recipes.active { display: block; padding: 24px; max-height: 600px; overflow-y: auto; }
-    .add-item-section { flex: 1; margin-bottom: 0; position: sticky; top: 24px; }
-    .items-list-section { flex: 1.5; padding-bottom: 0; max-height: 500px; overflow-y: auto; padding-right: 8px; }
-    .items-list-section::-webkit-scrollbar, #tab-recipes.active::-webkit-scrollbar { width: 6px; }
-    .items-list-section::-webkit-scrollbar-track, #tab-recipes.active::-webkit-scrollbar-track { background: transparent; }
-    .items-list-section::-webkit-scrollbar-thumb, #tab-recipes.active::-webkit-scrollbar-thumb { background-color: var(--border-color); border-radius: 20px; }
-    footer { position: static; border-radius: 0 0 24px 24px; box-shadow: none; padding: 24px; }
-}
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = htmlContent;
+            
+            const opt = {
+                margin:       10,
+                filename:     `compra_mercado_${new Date().getTime()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opt).from(tempDiv).save();
+        });
+    }
+
+    // === INTELIGÊNCIA ARTIFICIAL (Google Gemini) ===
+    const checkApiKey = () => {
+        const key = sessionStorage.getItem('gemini_api_key');
+        if (key) {
+            aiConnectBtn.style.display = 'none';
+            if (aiHelpBtn) aiHelpBtn.style.display = 'none';
+            if (aiHelpContent) aiHelpContent.style.display = 'none';
+            aiGenerateBtn.style.display = 'inline-block';
+            aiStatus.textContent = 'Gemini Conectado ✅';
+        } else {
+            aiConnectBtn.style.display = 'inline-block';
+            if (aiHelpBtn) aiHelpBtn.style.display = 'inline-block';
+            aiGenerateBtn.style.display = 'none';
+            aiStatus.textContent = '';
+        }
+    };
+
+    if (aiHelpBtn && aiHelpContent) {
+        aiHelpBtn.addEventListener('click', () => {
+            if (aiHelpContent.style.display === 'none') {
+                aiHelpContent.style.display = 'block';
+            } else {
+                aiHelpContent.style.display = 'none';
+            }
+        });
+    }
+
+    aiConnectBtn.addEventListener('click', () => { aiModal.style.display = 'flex'; });
+    closeAiModalBtn.addEventListener('click', () => { aiModal.style.display = 'none'; });
+    
+    saveAiKeyBtn.addEventListener('click', () => {
+        const val = aiKeyInput.value.trim();
+        if (val) {
+            sessionStorage.setItem('gemini_api_key', val);
+            aiKeyInput.value = '';
+            aiModal.style.display = 'none';
+            checkApiKey();
+        }
+    });
+
+    aiGenerateBtn.addEventListener('click', async () => {
+        const key = sessionStorage.getItem('gemini_api_key');
+        if (!key) return;
+        
+        if (items.length === 0) {
+            alert("Adicione alguns itens no carrinho primeiro!");
+            return;
+        }
+
+        const ingredientsList = items.map(i => i.name).join(", ");
+        aiGenerateBtn.disabled = true;
+        aiGenerateBtn.textContent = 'Pensando... 🧠';
+        recipesListEl.innerHTML = ''; // Clear previous
+
+        console.log(`Solicitando receita com Gemini para: ${ingredientsList}`);
+        try {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{
+                            text: `Você é um mestre cuca criativo. Aqui estão os ingredientes que tenho no carrinho: ${ingredientsList}. Sugira uma receita criativa e deliciosa usando a maioria deles. Responda em texto simples com Nome da Receita, Ingredientes necessários e o Modo de Preparo. Separe as seções de forma visualmente limpa.`
+                        }]
+                    }]
+                })
+            });
+
+            console.log(`Resposta Gemini Status: ${response.status}`);
+            if(!response.ok) throw new Error(`Falha na API: ${response.status} - ${response.statusText}`);
+            const data = await response.json();
+            
+            const recipeText = data.candidates[0].content.parts[0].text;
+            console.log("Receita recebida com sucesso!");
+            
+            const card = document.createElement('div');
+            card.className = 'recipe-card';
+            card.textContent = recipeText; 
+            recipesListEl.appendChild(card);
+
+        } catch (error) {
+            console.error(`Erro ao conectar com a IA: ${error}`);
+            alert("Erro ao conectar com a IA. Verifique o Debugger.");
+            sessionStorage.removeItem('gemini_api_key');
+            checkApiKey();
+        } finally {
+            aiGenerateBtn.disabled = false;
+            aiGenerateBtn.textContent = '🧠 Gerar Outra Receita';
+        }
+    });
+
+    // Inicia a aplicação
+    updateUI();
+    checkApiKey();
+});
