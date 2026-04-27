@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Mercado & IA</title>
+    <title>Calculadora de Mercado</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -13,6 +13,7 @@
             <div class="header-top">
                 <h1>🛒 Calc Mercado</h1>
                 <div class="header-actions">
+                    <button id="pdf-btn" class="action-btn pdf" title="Gerar PDF">📄 PDF</button>
                     <button id="finish-btn" class="action-btn finish" title="Salvar histórico de compras">💾 Salvar</button>
                     <button id="theme-toggle" class="action-btn theme-toggle" aria-label="Alternar tema">
                         <span class="icon-moon">🌙</span>
@@ -27,9 +28,22 @@
             </nav>
 
             <div class="budget-section" id="header-budget-section">
-                <label for="budget">Orçamento opcional (R$):</label>
-                <div class="input-group">
-                    <input type="number" id="budget" placeholder="0.00" step="0.01" min="0">
+                <div class="budget-group-container">
+                    <div class="budget-wrapper">
+                        <label for="budget">Orçamento opcional (R$):</label>
+                        <div class="input-group">
+                            <input type="number" id="budget" placeholder="0.00" step="0.01" min="0">
+                        </div>
+                    </div>
+                    <div class="group-mode-wrapper">
+                        <label class="group-toggle-label">
+                            <input type="checkbox" id="group-mode-toggle"> 🧑‍🤝‍🧑 Compras em Grupo
+                        </label>
+                        <div id="global-divisor-container" style="display: none;">
+                            <label for="global-divisor">Dividir por (pessoas):</label>
+                            <input type="number" id="global-divisor" value="1" min="1" step="1">
+                        </div>
+                    </div>
                 </div>
                 <div class="progress-bar-container">
                     <div class="progress-bar" id="budget-progress"></div>
@@ -80,6 +94,16 @@
                 
                 <div class="ai-connect-section" id="ai-connect-section">
                     <button id="ai-connect-btn" class="ai-btn">✨ Conectar Google Gemini</button>
+                    <button id="ai-help-btn" class="ai-btn-outline">Como conseguir a API Key? ❓</button>
+                    <div id="ai-help-content" class="ai-help-content" style="display: none;">
+                        <ol>
+                            <li>Acesse o <a href="https://aistudio.google.com/" target="_blank">Google AI Studio</a> com seu e-mail do Google.</li>
+                            <li>Clique em <strong>"API Keys"</strong> e depois em <strong>"Criar chave de API"</strong>.</li>
+                            <li>Ao criar uma chave você deve dar um nome e escolher um projeto importado. Se não tiver nenhum, Escolha a Gemini API.</li>
+                            <li>A chave API criada começará com <code>AIzaSy</code>, copie a chave inteira e cole no local para Conectar Google Gemini.</li>
+                        </ol>
+                        <p class="obs-text"><strong>OBS:</strong> Não divulgue sua chave em lugar nenhum.</p>
+                    </div>
                     <button id="ai-generate-btn" class="ai-btn generate" style="display: none;">🧠 Gerar Receita com IA</button>
                     <p id="ai-status" class="ai-status"></p>
                 </div>
@@ -96,9 +120,15 @@
                     <span>Itens:</span>
                     <strong id="total-items">0</strong>
                 </div>
-                <div class="summary-total">
-                    <span>Total:</span>
-                    <span id="total-price">R$ 0,00</span>
+                <div class="summary-totals">
+                    <div class="summary-total" id="my-share-container" style="display: none;">
+                        <span>Sua Parte:</span>
+                        <span id="my-share-price">R$ 0,00</span>
+                    </div>
+                    <div class="summary-total">
+                        <span>Total:</span>
+                        <span id="total-price">R$ 0,00</span>
+                    </div>
                 </div>
             </div>
         </footer>
@@ -118,6 +148,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
