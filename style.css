@@ -186,12 +186,21 @@ header {
 
 /* Rest of structure... */
 .budget-section label { font-size: 0.875rem; font-weight: 500; opacity: 0.9; }
-.budget-section input {
+.budget-section input[type="number"] {
     width: 100%; padding: 12px; border: none; border-radius: 12px; margin-top: 8px;
     font-size: 1rem; font-weight: 600; color: var(--budget-input-color);
     background: var(--budget-input-bg); transition: var(--transition);
 }
-.budget-section input:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.4); }
+.budget-section input[type="number"]:focus { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.4); }
+
+.budget-group-container { display: flex; flex-direction: column; gap: 4px; }
+.budget-wrapper, .group-mode-wrapper { display: flex; flex-direction: column; }
+.group-mode-wrapper { background: rgba(255, 255, 255, 0.15); padding: 10px 14px; border-radius: 12px; margin-top: 8px; }
+.group-toggle-label { display: flex; align-items: center; gap: 8px; font-weight: 600; cursor: pointer; font-size: 0.95rem; margin-bottom: 0; color: white; }
+.group-toggle-label input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--primary); cursor: pointer; }
+#global-divisor-container { margin-top: 10px; display: flex; align-items: center; gap: 8px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }
+#global-divisor-container label { font-size: 0.85rem; font-weight: 600; }
+#global-divisor-container input[type="number"] { width: 70px; padding: 8px; margin-top: 0; text-align: center; border-radius: 8px; }
 .progress-bar-container { height: 6px; background: rgba(255, 255, 255, 0.3); border-radius: 4px; margin-top: 12px; overflow: hidden; }
 .progress-bar { height: 100%; width: 0%; background-color: var(--success); transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.4s ease; }
 
@@ -239,18 +248,27 @@ header {
 .price-badge.cheaper { background: rgba(16, 185, 129, 0.1); color: var(--success); }
 .price-badge.expensive { background: rgba(239, 68, 68, 0.1); color: var(--danger); }
 .price-badge.equal { background: rgba(107, 114, 128, 0.1); color: var(--text-muted); }
-.item-total { font-weight: 700; font-size: 1.15rem; margin-right: 16px; color: var(--text-main); }
+.item-total { font-weight: 700; font-size: 1.15rem; margin-right: 16px; color: var(--text-main); text-align: right; }
+.item-total-share { display: block; font-size: 0.85rem; color: var(--primary); font-weight: 600; margin-top: 2px; }
 .btn-delete { background: var(--delete-bg); border: none; color: var(--danger); cursor: pointer; padding: 10px; border-radius: 10px; transition: var(--transition); display: flex; align-items: center; justify-content: center; }
 .btn-delete:hover { color: white; background-color: var(--danger); }
+
+/* Item Divisor (Group Mode) */
+.item-divisor-wrapper { display: flex; align-items: center; gap: 6px; margin-top: 8px; background: var(--bg-color); padding: 4px 8px; border-radius: 8px; width: fit-content; border: 1px solid var(--border-color); }
+.item-divisor-wrapper label { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; margin: 0; text-transform: none; }
+.item-divisor-wrapper input { width: 50px; padding: 4px; border: 1px solid var(--input-border); border-radius: 6px; background: var(--input-bg); color: var(--text-main); font-size: 0.85rem; text-align: center; margin: 0; }
+.item-divisor-wrapper input:focus { outline: none; border-color: var(--primary); }
 
 footer { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--footer-bg); backdrop-filter: blur(10px); padding: 20px 24px; border-top: 1px solid var(--border-color); box-shadow: 0 -4px 10px -1px rgba(0, 0, 0, 0.05); transition: background-color 0.3s ease, border-color 0.3s ease; }
 .summary { display: flex; justify-content: space-between; align-items: center; }
 .summary-item { color: var(--text-muted); font-size: 1rem; }
 .summary-item strong { color: var(--text-main); font-size: 1.1rem; margin-left: 4px; }
-.summary-total { display: flex; align-items: center; gap: 8px; }
-.summary-total span:first-child { font-weight: 600; color: var(--text-muted); }
-.summary-total span:last-child { font-size: 1.75rem; font-weight: 800; color: var(--primary); transition: color 0.3s ease; }
-.summary-total span:last-child.over-budget { color: var(--danger); }
+.summary-totals { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+.summary-total { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; }
+.summary-total span:first-child { font-weight: 600; color: var(--text-muted); text-align: right; }
+.summary-total span:last-child { font-size: 1.5rem; font-weight: 800; color: var(--text-main); transition: color 0.3s ease; text-align: right; min-width: 100px; }
+#my-share-container span:last-child { color: var(--primary); font-size: 1.75rem; }
+.summary-total span:last-child.over-budget { color: var(--danger) !important; }
 
 /* IA / Recipes */
 .recipes-header { margin-bottom: 24px; text-align: center; }
@@ -259,7 +277,17 @@ footer { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--
 .ai-connect-section { margin-bottom: 20px; text-align: center; }
 .ai-btn { width: 100%; padding: 14px; background: linear-gradient(135deg, #10B981, #059669); color: white; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.3); transition: var(--transition); }
 .ai-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 8px rgba(16, 185, 129, 0.4); }
-.ai-btn.generate { background: linear-gradient(135deg, #8B5CF6, #6D28D9); box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3); }
+.ai-btn-outline { width: 100%; padding: 12px; margin-top: 10px; background: transparent; color: var(--primary); border: 1px solid var(--primary); border-radius: 12px; font-weight: 600; font-size: 0.9rem; cursor: pointer; transition: var(--transition); }
+.ai-btn-outline:hover { background: rgba(79, 70, 229, 0.1); }
+.ai-help-content { background: var(--section-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px; margin-top: 10px; text-align: left; font-size: 0.85rem; color: var(--text-main); line-height: 1.5; }
+.ai-help-content ol { padding-left: 20px; margin-bottom: 12px; }
+.ai-help-content li { margin-bottom: 8px; }
+.ai-help-content a { color: var(--primary); font-weight: 600; text-decoration: none; }
+.ai-help-content a:hover { text-decoration: underline; }
+.ai-help-content code { background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; font-family: monospace; }
+[data-theme="dark"] .ai-help-content code { background: rgba(255,255,255,0.1); }
+.obs-text { color: var(--danger); font-weight: 700; margin-top: 10px; }
+.ai-btn.generate { background: linear-gradient(135deg, #8B5CF6, #6D28D9); box-shadow: 0 4px 6px rgba(139, 92, 246, 0.3); margin-top: 10px; }
 .ai-status { margin-top: 10px; font-size: 0.85rem; color: var(--text-muted); }
 
 .recipe-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); white-space: pre-line; color: var(--text-main); line-height: 1.5; }
@@ -276,6 +304,19 @@ footer { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--
 .modal-actions { display: flex; gap: 12px; justify-content: flex-end; }
 .btn-primary { padding: 10px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; }
 .btn-cancel { padding: 10px 16px; background: transparent; color: var(--text-muted); border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600; cursor: pointer; }
+
+/* PDF Export styles */
+.pdf-export-container { padding: 20px; font-family: 'Inter', sans-serif; background: white; color: black; }
+.pdf-header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #E5E7EB; padding-bottom: 10px; }
+.pdf-header h1 { font-size: 1.5rem; color: #111827; }
+.pdf-header p { color: #6B7280; font-size: 0.9rem; }
+.pdf-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.pdf-table th, .pdf-table td { border-bottom: 1px solid #E5E7EB; padding: 10px 8px; text-align: left; font-size: 0.9rem; }
+.pdf-table th { font-weight: 700; color: #374151; background-color: #F9FAFB; }
+.pdf-table td.number { text-align: right; }
+.pdf-totals { width: 100%; margin-top: 20px; text-align: right; font-size: 1rem; }
+.pdf-totals p { margin: 6px 0; }
+.pdf-totals .highlight { font-size: 1.25rem; font-weight: bold; color: #4F46E5; }
 
 /* Responsive */
 @media (min-width: 768px) {
