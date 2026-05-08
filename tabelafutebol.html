@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brasileirão - Tabela e Partidas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="tabelafutebol.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="glass-header">
+            <div class="logo">
+                <div class="logo-icon">⚽</div>
+                <h1>Brasileirão <span class="highlight">Pro</span></h1>
+            </div>
+            
+            <div class="main-tabs">
+                <button id="tab-btn-tabela" class="tab-btn active" onclick="switchTab('tabela')">Aba Tabela</button>
+                <button id="tab-btn-partidas" class="tab-btn" onclick="switchTab('partidas')">Aba Partidas</button>
+            </div>
+            
+            <div class="series-toggle">
+                <button id="btn-serie-a" class="active" onclick="setSeries('A')">Série A</button>
+                <button id="btn-serie-b" onclick="setSeries('B')">Série B</button>
+            </div>
+        </header>
+
+        <main class="content-wrapper">
+            <!-- TAB: TABELA -->
+            <div id="tab-tabela" class="tab-content active">
+                <div class="content-grid">
+                    <section class="table-section glass-panel">
+                        <div class="panel-header">
+                            <h2 id="table-title">Classificação - Série A</h2>
+                            <div class="actions" style="display: flex; gap: 0.5rem;">
+                                <label for="import-file" class="btn-export" style="cursor: pointer;">📂 Importar JSON</label>
+                                <input type="file" id="import-file" accept=".json" style="display: none;" onchange="importData(event)">
+                                <button id="btn-export" class="btn-export" onclick="exportData()">📥 Exportar Dados</button>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table id="league-table">
+                                <thead>
+                                    <tr>
+                                        <th class="col-pos">#</th>
+                                        <th class="col-club">Clube</th>
+                                        <th class="col-pts" title="Pontos">Pts</th>
+                                        <th title="Partidas Jogadas">PJ</th>
+                                        <th title="Vitórias">VIT</th>
+                                        <th title="Empates">E</th>
+                                        <th title="Derrotas">DER</th>
+                                        <th title="Gols Marcados">GM</th>
+                                        <th title="Gols Contra">GC</th>
+                                        <th title="Saldo de Gols">SG</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-body">
+                                    <!-- Rows will be injected here by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="table-legend" class="table-legend mt-4">
+                            <!-- Injected by JS -->
+                        </div>
+                    </section>
+
+                    <aside class="controls-section">
+                        <div class="glass-panel form-panel">
+                            <h2>Adicionar Clube</h2>
+                            <form id="add-club-form">
+                                <div class="input-group">
+                                    <label for="club-name">Nome do Clube</label>
+                                    <input type="text" id="club-name" placeholder="Ex: Flamengo" required autocomplete="off">
+                                </div>
+                                <div class="input-group">
+                                    <label for="club-series">Série</label>
+                                    <select id="club-series">
+                                        <option value="A">Série A</option>
+                                        <option value="B">Série B</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-primary">Cadastrar Clube</button>
+                            </form>
+                        </div>
+                    </aside>
+                </div>
+            </div>
+
+            <!-- TAB: PARTIDAS -->
+            <div id="tab-partidas" class="tab-content">
+                <div class="glass-panel form-panel match-registration-panel">
+                    <h2>Registrar Partida (Série <span id="match-series-label">A</span>)</h2>
+                    <form id="add-match-form">
+                        
+                        <div class="match-meta-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                            <div class="input-group">
+                                <label for="match-round">Rodada</label>
+                                <input type="number" id="match-round" min="1" max="38" required>
+                            </div>
+                            <div class="input-group date-group">
+                                <label for="match-date">Data da Partida</label>
+                                <input type="date" id="match-date" required>
+                            </div>
+                        </div>
+
+                        <div class="match-teams-grid">
+                            <!-- MANDANTE -->
+                            <div class="team-card home-team-card">
+                                <h3>Mandante</h3>
+                                <div class="input-group">
+                                    <select id="home-team" required>
+                                        <option value="" disabled selected>Selecione</option>
+                                    </select>
+                                </div>
+                                <div class="stats-grid">
+                                    <div class="input-group"><label>Gols</label><input type="number" id="home-score" min="0" required></div>
+                                    <div class="input-group"><label>Posse de Bola (%)</label><input type="number" id="home-possession" min="0" max="100" value="50"></div>
+                                    <div class="input-group"><label>Passes Certos</label><input type="number" id="home-passes" min="0" value="0"></div>
+                                    <div class="input-group"><label>Escanteios</label><input type="number" id="home-corners" min="0" value="0"></div>
+                                    <div class="input-group"><label>Faltas</label><input type="number" id="home-fouls" min="0" value="0"></div>
+                                    <div class="input-group"><label>Impedimentos</label><input type="number" id="home-offsides" min="0" value="0"></div>
+                                    <div class="input-group"><label>C. Amarelos</label><input type="number" id="home-yellow" min="0" value="0"></div>
+                                    <div class="input-group"><label>C. Vermelhos</label><input type="number" id="home-red" min="0" value="0"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Anotações Atletas (Gols, Cartões...)</label>
+                                    <textarea id="home-notes" rows="2" placeholder="Ex: Gabigol (2 Gols)"></textarea>
+                                </div>
+                            </div>
+
+                            <div class="vs-divider"><h1>X</h1></div>
+
+                            <!-- VISITANTE -->
+                            <div class="team-card away-team-card">
+                                <h3>Visitante</h3>
+                                <div class="input-group">
+                                    <select id="away-team" required>
+                                        <option value="" disabled selected>Selecione</option>
+                                    </select>
+                                </div>
+                                <div class="stats-grid">
+                                    <div class="input-group"><label>Gols</label><input type="number" id="away-score" min="0" required></div>
+                                    <div class="input-group"><label>Posse de Bola (%)</label><input type="number" id="away-possession" min="0" max="100" value="50"></div>
+                                    <div class="input-group"><label>Passes Certos</label><input type="number" id="away-passes" min="0" value="0"></div>
+                                    <div class="input-group"><label>Escanteios</label><input type="number" id="away-corners" min="0" value="0"></div>
+                                    <div class="input-group"><label>Faltas</label><input type="number" id="away-fouls" min="0" value="0"></div>
+                                    <div class="input-group"><label>Impedimentos</label><input type="number" id="away-offsides" min="0" value="0"></div>
+                                    <div class="input-group"><label>C. Amarelos</label><input type="number" id="away-yellow" min="0" value="0"></div>
+                                    <div class="input-group"><label>C. Vermelhos</label><input type="number" id="away-red" min="0" value="0"></div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Anotações Atletas (Gols, Cartões...)</label>
+                                    <textarea id="away-notes" rows="2" placeholder="Ex: Calleri (1 Gol)"></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="input-group" style="margin-top: 1.5rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; border: 1px solid var(--glass-border);">
+                            <input type="checkbox" id="match-complete" checked style="width: 20px; height: 20px; cursor: pointer;">
+                            <label for="match-complete" style="margin: 0; font-size: 1rem; color: var(--text-primary); cursor: pointer;">Todos os dados da partida estão completos</label>
+                        </div>
+
+                        <button type="submit" class="btn-secondary mt-4" style="font-size: 1.2rem; padding: 1rem;">Confirmar Partida e Salvar</button>
+                    </form>
+                </div>
+
+                <!-- LISTA DE PARTIDAS -->
+                <div class="glass-panel mt-4 matches-list-panel">
+                    <h2>Partidas Registradas</h2>
+                    <div id="matches-container">
+                        <!-- Matches grouped by round will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CLUB PROFILE MODAL -->
+    <div id="club-modal" class="modal-overlay" style="display: none;">
+        <div class="modal-content glass-panel">
+            <button class="btn-close-modal" onclick="closeClubProfile()">✖</button>
+            <div class="modal-header">
+                <div class="club-badge-large">⚽</div>
+                <div style="flex-grow: 1;">
+                    <h2 id="modal-club-name">Nome do Clube</h2>
+                    <p id="modal-club-series">Série A</p>
+                </div>
+                <button id="btn-transfer-series" class="btn-transfer" onclick="transferClubSeries()">⬇️ Rebaixar</button>
+            </div>
+            
+            <div class="modal-tabs">
+                <button id="modal-btn-estatisticas" class="modal-tab-btn active" onclick="switchModalTab('estatisticas')">Estatísticas e Chances</button>
+                <button id="modal-btn-elenco" class="modal-tab-btn" onclick="switchModalTab('elenco')">Elenco do Clube</button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- TAB: ESTATÍSTICAS -->
+                <div id="modal-tab-estatisticas" class="modal-tab-content active">
+                    <div class="stats-cards-grid">
+                        <div class="stat-card">
+                            <h4>Escanteios</h4>
+                            <div class="stat-value" id="stat-avg-corners">0.0</div>
+                            <div class="stat-desc">Média por partida</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Faltas Cometidas</h4>
+                            <div class="stat-value" id="stat-avg-fouls">0.0</div>
+                            <div class="stat-desc">Média por partida</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Passes Certos</h4>
+                            <div class="stat-value" id="stat-avg-passes">0</div>
+                            <div class="stat-desc">Média de acerto</div>
+                        </div>
+                        <div class="stat-card">
+                            <h4>Posse de Bola</h4>
+                            <div class="stat-value" id="stat-avg-possession">50%</div>
+                            <div class="stat-desc">Média por partida</div>
+                        </div>
+                        <div class="stat-card win-card">
+                            <h4>Taxa de Vitórias</h4>
+                            <div class="stat-value" id="stat-winrate">0%</div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill win-fill" id="winrate-fill"></div></div>
+                        </div>
+                        <div class="stat-card risk-card">
+                            <h4>Risco de Série B</h4>
+                            <div class="stat-value" id="stat-relegation-chance">0%</div>
+                            <div class="progress-bar-bg"><div class="progress-bar-fill risk-fill" id="risk-fill"></div></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- TAB: ELENCO -->
+                <div id="modal-tab-elenco" class="modal-tab-content" style="display: none;">
+                    <div class="roster-container">
+                        <div class="add-player-form" style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                            <input type="text" id="new-player-name" placeholder="Nome do Jogador" style="flex: 1;">
+                            <input type="text" id="new-player-position" placeholder="Pos. (Ex: ATA)" style="width: 100px;">
+                            <button onclick="addPlayerToClub()" class="btn-primary" style="padding: 0.5rem 1rem; width: auto;">Adicionar</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table style="width: 100%;">
+                                <thead>
+                                    <tr>
+                                        <th style="text-align: left;">Nome</th>
+                                        <th>Posição</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="roster-list">
+                                    <!-- Players injected here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="tabelafutebol.js"></script>
+</body>
+</html>
